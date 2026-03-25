@@ -1,0 +1,17 @@
+data
+db-data
+ollama-data
+postgres_data
+
+.git
+__pycache__
+*.pyc
+tests
+uv.lock
+.venv
+venv
+dist
+build
+*.egg-info
+.env
+leann
