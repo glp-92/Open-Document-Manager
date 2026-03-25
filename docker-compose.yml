@@ -1,11 +1,12 @@
 services:
-  # api:
-  #   build:
-  #     context: .
-  #     dockerfile: ./api/Dockerfile
-  #   restart: on-failure
-  #   ports:
-  #     - "127.0.0.1:8080:8080"
+  api:
+    build:
+      context: ./api
+    restart: on-failure
+    environment:
+      DB_HOST: db
+    ports:
+      - "127.0.0.1:8080:8080"
 
   ollama-server:
     image: ollama/ollama:latest
@@ -40,7 +41,6 @@ services:
               capabilities: [gpu]
 
   db:
-    container_name: db
     image: mariadb:12.0.2
     restart: on-failure
     security_opt:
@@ -60,8 +60,8 @@ services:
           "ping",
           "-h",
           "localhost",
-          "-u${DB_USER}",
-          "-p${DB_PASSWORD}",
+          "-u${DB_USR}",
+          "-p${DB_PWD}",
         ]
       interval: 10s
       retries: 10
