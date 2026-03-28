@@ -24,6 +24,8 @@ class DocumentRepositoryImpl(DocumentRepository):
         def _apply_filters(stmt: Select):
             if filters.filename:
                 stmt = stmt.where(DBDocument.filename.contains(filters.filename))
+            if filters.chat_id:
+                stmt = stmt.where(DBDocument.chat_id == filters.chat_id)
             return stmt
 
         total_stmt = select(func.count()).select_from(DBDocument)
