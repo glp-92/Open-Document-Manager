@@ -1,5 +1,4 @@
 import datetime
-from uuid import uuid4
 
 
 def gen_string_timestamp(timestamp: datetime.datetime | None = None) -> str:
@@ -10,7 +9,3 @@ def gen_string_timestamp(timestamp: datetime.datetime | None = None) -> str:
 
 def gen_utc_timestamp() -> datetime.datetime:
     return datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
-
-
-def gen_uuid() -> bytes:
-    return uuid4().bytes

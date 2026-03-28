@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 from core.document.domain.model import Document
+from core.shared.infrastructure.timestamps import gen_utc_timestamp
+from core.shared.infrastructure.uuid import UUID, gen_uuid
 from db.sql_alchemy_unit_of_work import Base
-from db.utils import gen_utc_timestamp, gen_uuid
 from sqlalchemy import INTEGER, Column, DateTime, String
-from sqlalchemy.dialects.mysql import BINARY
 
 
 class DBDocument(Base):
     __tablename__ = "documents"
 
-    id = Column(BINARY(16), primary_key=True, default=gen_uuid)
+    id = Column(UUID, primary_key=True, default=gen_uuid)
     filename = Column(String(100), nullable=False)
     url = Column(String(100), nullable=True)
     size = Column(INTEGER, nullable=True)

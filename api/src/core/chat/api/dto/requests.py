@@ -1,4 +1,5 @@
 from typing import Literal
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -12,6 +13,7 @@ class ChatFilters(BaseModel):
 
 
 class NewChatRequest(BaseModel):
+    workspace_id: UUID
     name: str | None = None
 
 

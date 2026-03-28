@@ -1,6 +1,9 @@
+from uuid import UUID
+
 from core.workspace.api.dto.requests import NewWorkspaceRequest, WorkspaceFilters
 from core.workspace.api.dto.responses import WorkspaceListResponse, WorkspaceResponse
 from core.workspace.domain.model import Workspace
+from core.workspace.exceptions.workspace import WorkspaceNotFoundError
 from core.workspace.infrastructure.db_model import DBWorkspace
 from core.workspace.infrastructure.repository_impl import WorkspaceRepositoryImpl
 from sqlalchemy.orm import Session
@@ -31,3 +34,9 @@ class WorkspaceService:
             ],
             total=total,
         )
+
+    def delete_workspace_by_id(self, session: Session, workspace_id: UUID):
+        deleted: bool = self.workspace_repository_impl.delete_by_id(session=session, id=workspace_id)
+        if not deleted:
+            raise WorkspaceNotFoundError(workspace_id=workspace_id)
+        return

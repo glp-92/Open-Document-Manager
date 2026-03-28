@@ -3,10 +3,12 @@ from __future__ import annotations
 from datetime import datetime
 
 from core.chat.domain.model import Chat
+from core.shared.infrastructure.timestamps import gen_string_timestamp, gen_utc_timestamp
+from core.shared.infrastructure.uuid import UUID, gen_uuid
+from core.workspace.infrastructure.db_model import DBWorkspace
 from db.sql_alchemy_unit_of_work import Base
-from db.utils import gen_string_timestamp, gen_utc_timestamp, gen_uuid
-from sqlalchemy import Column, DateTime, ExecutionContext, String
-from sqlalchemy.dialects.mysql import BINARY
+from sqlalchemy import Column, DateTime, ExecutionContext, ForeignKey, String
+from sqlalchemy.orm import relationship
 
 
 def gen_default_name_from_creation_date(context: ExecutionContext):
@@ -19,7 +21,7 @@ def gen_default_name_from_creation_date(context: ExecutionContext):
 class DBChat(Base):
     __tablename__ = "chats"
 
-    id = Column(BINARY(16), primary_key=True, default=gen_uuid)
+    id = Column(UUID, primary_key=True, default=gen_uuid)
     name = Column(String(100), nullable=False, default=gen_default_name_from_creation_date)
     created_at = Column(DateTime, nullable=True, default=gen_utc_timestamp)
     updated_at = Column(
@@ -28,6 +30,8 @@ class DBChat(Base):
         default=gen_utc_timestamp,
         onupdate=gen_utc_timestamp,
     )
+    workspace_id = Column(UUID, ForeignKey(DBWorkspace.id, ondelete="CASCADE"), nullable=False)
+    workspace = relationship("DBWorkspace", back_populates="chats")
 
     @staticmethod
     def to_domain_object(db_chat: DBChat) -> Chat:

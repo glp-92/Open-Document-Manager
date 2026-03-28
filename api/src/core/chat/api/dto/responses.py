@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 class ChatResponse(BaseModel):
     id: UUID
+    workspace_id: UUID
     name: str
     created_at: datetime
     updated_at: datetime

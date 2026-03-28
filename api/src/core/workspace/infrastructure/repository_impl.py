@@ -1,8 +1,10 @@
+from uuid import UUID
+
 from core.workspace.api.dto.requests import WorkspaceFilters
 from core.workspace.domain.model import Workspace
 from core.workspace.domain.repository import WorkspaceRepository
 from core.workspace.infrastructure.db_model import DBWorkspace
-from sqlalchemy import Column, Select, func, select
+from sqlalchemy import Column, Result, Select, delete, func, select
 from sqlalchemy.orm import Session
 
 
@@ -38,3 +40,9 @@ class WorkspaceRepositoryImpl(WorkspaceRepository):
         result = session.execute(stmt)
         db_workspaces: list[DBWorkspace] = result.scalars().all()
         return db_workspaces, total
+
+    @staticmethod
+    def delete_by_id(session: Session, id: UUID) -> bool:
+        stmt = delete(DBWorkspace).where(DBWorkspace.id == id)
+        result: Result = session.execute(stmt)
+        return result.rowcount > 0

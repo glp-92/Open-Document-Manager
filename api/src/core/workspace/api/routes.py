@@ -1,9 +1,11 @@
 import traceback
 from typing import Annotated
+from uuid import UUID
 
 from core.workspace.api.dto.requests import NewWorkspaceRequest, WorkspaceFilters
 from core.workspace.api.dto.responses import WorkspaceListResponse, WorkspaceResponse
 from core.workspace.application.service import WorkspaceService
+from core.workspace.exceptions.workspace import WorkspaceNotFoundError
 from db.sql_alchemy_unit_of_work import SqlAlchemyUnitOfWork, get_db
 from fastapi import APIRouter, Depends, Query
 from fastapi.exceptions import HTTPException
@@ -38,6 +40,16 @@ class WorkspaceRouter:
                 return self.workspace_service.create_workspace(
                     session=uow.session, new_workspace_request=new_workspace_request
                 )
+            except (ValidationError, Exception):
+                traceback.print_exc()
+                raise HTTPException(status_code=400, detail="bad request")
+
+        @self.router.delete("/{workspace_id}", status_code=204)
+        async def delete_workspace(workspace_id: UUID, uow: SqlAlchemyUnitOfWork = Depends(get_db)):
+            try:
+                return self.workspace_service.delete_workspace_by_id(session=uow.session, workspace_id=workspace_id)
+            except WorkspaceNotFoundError:
+                raise HTTPException(status_code=404, detail="not found")
             except (ValidationError, Exception):
                 traceback.print_exc()
                 raise HTTPException(status_code=400, detail="bad request")
