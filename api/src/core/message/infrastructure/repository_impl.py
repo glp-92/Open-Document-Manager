@@ -26,6 +26,8 @@ class MessageRepositoryImpl(MessageRepository):
                 stmt = stmt.where(DBMessage.owner == filters.owner)
             if filters.content:
                 stmt = stmt.where(DBMessage.content.contains(filters.content))
+            if filters.chat_id:
+                stmt = stmt.where(DBMessage.chat_id == filters.chat_id)
             return stmt
 
         total_stmt = select(func.count()).select_from(DBMessage)
