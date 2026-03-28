@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from core.chat.infrastructure.db_model import DBChat
-from core.document.domain.model import Document
+from core.document.domain.model import Document, StorageStatus
 from core.shared.infrastructure.timestamps import gen_utc_timestamp
 from core.shared.infrastructure.uuid import UUID, gen_uuid
 from db.sql_alchemy_unit_of_work import Base
-from sqlalchemy import INTEGER, Column, DateTime, ForeignKey, String
+from sqlalchemy import INTEGER, Column, DateTime, Enum, ForeignKey, String
 from sqlalchemy.orm import relationship
 
 
@@ -16,6 +16,7 @@ class DBDocument(Base):
     filename = Column(String(100), nullable=False)
     url = Column(String(100), nullable=True)
     size = Column(INTEGER, nullable=True)
+    storage_status = Column(Enum(StorageStatus), nullable=False, default=StorageStatus.PENDING)
     created_at = Column(DateTime, nullable=True, default=gen_utc_timestamp)
     updated_at = Column(
         DateTime,

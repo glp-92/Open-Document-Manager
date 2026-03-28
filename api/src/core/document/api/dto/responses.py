@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -12,6 +13,10 @@ class DocumentResponse(BaseModel):
     size: int | None = None
     created_at: datetime
     updated_at: datetime
+
+
+class DocumentStorageWebhookResponse(BaseModel):
+    status: Literal["ok", "error"] = "ok"
 
 
 class DocumentListResponse(BaseModel):

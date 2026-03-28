@@ -1,13 +1,22 @@
 from datetime import datetime
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import BaseModel
+
+
+class StorageStatus(StrEnum):
+    PENDING = "pending"
+    READY = "ready"
+    ERROR = "error"
+    DELETED = "deleted"
 
 
 class Document(BaseModel):
     id: UUID | None = None
     chat_id: UUID
     filename: str
+    storage_status: StorageStatus = StorageStatus.PENDING
     url: str | None = None
     size: int | None = None
     created_at: datetime | None = None

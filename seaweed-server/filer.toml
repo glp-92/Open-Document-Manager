@@ -1,0 +1,24 @@
+[general]
+options_for_filer_server = ""
+
+[leveldb2]
+enabled = true
+dir = "/data/filerdb"
+
+[notification.webhook]
+enabled = true
+endpoint = "http://api:8000/webhooks/storage"
+event_filter = ["create"]
+
+[s3]
+enabled = true
+port = 9000
+allowEmptyFolder = true
+
+[[s3.config.identities]]
+name = "admin"
+actions = ["Admin", "Read", "Write"]
+
+[[s3.config.identities.credentials]]
+accessKey = "testuser"
+secretKey = "testpwd"

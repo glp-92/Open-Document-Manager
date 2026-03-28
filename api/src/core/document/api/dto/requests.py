@@ -16,3 +16,24 @@ class DocumentFilters(BaseModel):
 class NewDocumentRequest(BaseModel):
     chat_id: UUID
     filename: str
+
+
+class DocumentStorageWebhookEntryAttributes(BaseModel):
+    file_size: int
+    mime: str
+
+
+class DocumentStorageWebhookEntry(BaseModel):
+    name: str
+    attributes: DocumentStorageWebhookEntryAttributes
+
+
+class DocumentStorageWebhookMessage(BaseModel):
+    old_entry: DocumentStorageWebhookEntry | None = None
+    new_entry: DocumentStorageWebhookEntry | None = None
+
+
+class DocumentStorageWebhookRequest(BaseModel):
+    event_type: Literal["create", "update", "rename", "delete"]
+    key: str
+    message: DocumentStorageWebhookMessage

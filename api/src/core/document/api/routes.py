@@ -2,14 +2,15 @@ import traceback
 from typing import Annotated
 from uuid import UUID
 
-from core.document.api.dto.requests import DocumentFilters, NewDocumentRequest
-from core.document.api.dto.responses import DocumentListResponse, DocumentResponse
+from core.document.api.dto.requests import DocumentFilters, DocumentStorageWebhookRequest, NewDocumentRequest
+from core.document.api.dto.responses import DocumentListResponse, DocumentResponse, DocumentStorageWebhookResponse
 from core.document.application.service import DocumentService
 from core.document.exceptions.document import DocumentNotFoundError
 from db.sql_alchemy_unit_of_work import SqlAlchemyUnitOfWork, get_db
 from fastapi import APIRouter, Depends, Query
 from fastapi.exceptions import HTTPException
 from pydantic import ValidationError
+from storage.s3_adapter import S3UnitOfWork, get_storage
 
 
 class DocumentRouter:
@@ -32,12 +33,24 @@ class DocumentRouter:
 
         @self.router.post("", status_code=201, response_model=DocumentResponse)
         async def create_document(
-            new_document_request: NewDocumentRequest, uow: SqlAlchemyUnitOfWork = Depends(get_db)
+            new_document_request: NewDocumentRequest,
+            sql_uow: SqlAlchemyUnitOfWork = Depends(get_db),
+            s3_uow: S3UnitOfWork = Depends(get_storage),  # noqa: ARG001
         ):
             try:
                 return self.document_service.create_document(
-                    session=uow.session, new_document_request=new_document_request
+                    session=sql_uow.session, new_document_request=new_document_request
                 )
+            except (ValidationError, Exception):
+                traceback.print_exc()
+                raise HTTPException(status_code=400, detail="bad request")
+
+        @self.router.post("/webhooks", status_code=201, response_model=DocumentStorageWebhookResponse)
+        async def process_webhooks_from_storage(
+            document_storage_webhook_request: DocumentStorageWebhookRequest,
+        ):
+            try:
+                print(document_storage_webhook_request)  # noqa: T201
             except (ValidationError, Exception):
                 traceback.print_exc()
                 raise HTTPException(status_code=400, detail="bad request")

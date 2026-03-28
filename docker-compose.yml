@@ -63,3 +63,34 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
+
+  seaweedfs:
+    image: chrislusf/seaweedfs:latest
+    container_name: seaweedfs
+    ports:
+      - "9000:9000" # S3 API
+      - "9333:9333" # Server Status
+      - "8888:8888" # WebUI
+    volumes:
+      - ./seaweed-server/filer.toml:/etc/seaweedfs/filer.toml
+      # - ./sw_data:/data
+    command: >
+      server 
+      -ip=seaweedfs
+      -s3 
+      -s3.port=9000 
+      -master.port=9333 
+      -volume.port=8080 
+      -filer 
+      -filer.port=8888 
+      -dir=/data
+    environment:
+      FILE_STORAGE_ACCESS_KEY: "${STORAGE_USR}"
+      FILE_STORAGE_SECRET_KEY: "${STORAGE_PWD}"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: on-failure
