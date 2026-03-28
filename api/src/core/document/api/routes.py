@@ -1,9 +1,11 @@
 import traceback
 from typing import Annotated
+from uuid import UUID
 
 from core.document.api.dto.requests import DocumentFilters, NewDocumentRequest
 from core.document.api.dto.responses import DocumentListResponse, DocumentResponse
 from core.document.application.service import DocumentService
+from core.document.exceptions.document import DocumentNotFoundError
 from db.sql_alchemy_unit_of_work import SqlAlchemyUnitOfWork, get_db
 from fastapi import APIRouter, Depends, Query
 from fastapi.exceptions import HTTPException
@@ -36,6 +38,16 @@ class DocumentRouter:
                 return self.document_service.create_document(
                     session=uow.session, new_document_request=new_document_request
                 )
+            except (ValidationError, Exception):
+                traceback.print_exc()
+                raise HTTPException(status_code=400, detail="bad request")
+
+        @self.router.delete("/{document_id}", status_code=204)
+        async def delete_document(document_id: UUID, uow: SqlAlchemyUnitOfWork = Depends(get_db)):
+            try:
+                return self.document_service.delete_document_by_id(session=uow.session, document_id=document_id)
+            except DocumentNotFoundError:
+                raise HTTPException(status_code=404, detail="not found")
             except (ValidationError, Exception):
                 traceback.print_exc()
                 raise HTTPException(status_code=400, detail="bad request")

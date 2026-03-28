@@ -1,6 +1,9 @@
+from uuid import UUID
+
 from core.document.api.dto.requests import DocumentFilters, NewDocumentRequest
 from core.document.api.dto.responses import DocumentListResponse, DocumentResponse
 from core.document.domain.model import Document
+from core.document.exceptions.document import DocumentNotFoundError
 from core.document.infrastructure.db_model import DBDocument
 from core.document.infrastructure.repository_impl import DocumentRepositoryImpl
 from sqlalchemy.orm import Session
@@ -28,3 +31,9 @@ class DocumentService:
             ],
             total=total,
         )
+
+    def delete_document_by_id(self, session: Session, document_id: UUID):
+        deleted: bool = self.document_repository_impl.delete_by_id(session=session, id=document_id)
+        if not deleted:
+            raise DocumentNotFoundError(workspace_id=document_id)
+        return

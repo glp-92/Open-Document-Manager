@@ -1,8 +1,10 @@
+from uuid import UUID
+
 from core.document.api.dto.requests import DocumentFilters
 from core.document.domain.model import Document
 from core.document.domain.repository import DocumentRepository
 from core.document.infrastructure.db_model import DBDocument
-from sqlalchemy import Column, Select, func, select
+from sqlalchemy import Column, Result, Select, delete, func, select
 from sqlalchemy.orm import Session
 
 
@@ -38,3 +40,9 @@ class DocumentRepositoryImpl(DocumentRepository):
         result = session.execute(stmt)
         db_documents: list[DBDocument] = result.scalars().all()
         return db_documents, total
+
+    @staticmethod
+    def delete_by_id(session: Session, id: UUID) -> bool:
+        stmt = delete(DBDocument).where(DBDocument.id == id)
+        result: Result = session.execute(stmt)
+        return result.rowcount > 0
