@@ -6,9 +6,10 @@ from pydantic import BaseModel
 
 class DocumentResponse(BaseModel):
     id: UUID
+    chat_id: UUID
     filename: str
-    url: str
-    size: int
+    url: str | None = None
+    size: int | None = None
     created_at: datetime
     updated_at: datetime
 

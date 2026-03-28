@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 class Document(BaseModel):
     id: UUID | None = None
+    chat_id: UUID
     filename: str
     url: str | None = None
     size: int | None = None

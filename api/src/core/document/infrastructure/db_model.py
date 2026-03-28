@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from core.chat.infrastructure.db_model import DBChat
 from core.document.domain.model import Document
 from core.shared.infrastructure.timestamps import gen_utc_timestamp
 from core.shared.infrastructure.uuid import UUID, gen_uuid
 from db.sql_alchemy_unit_of_work import Base
-from sqlalchemy import INTEGER, Column, DateTime, String
+from sqlalchemy import INTEGER, Column, DateTime, ForeignKey, String
+from sqlalchemy.orm import relationship
 
 
 class DBDocument(Base):
@@ -21,6 +23,8 @@ class DBDocument(Base):
         default=gen_utc_timestamp,
         onupdate=gen_utc_timestamp,
     )
+    chat_id = Column(UUID, ForeignKey(DBChat.id, ondelete="CASCADE"), nullable=False)
+    chat = relationship("DBChat", back_populates="documents")
 
     @staticmethod
     def to_domain_object(db_document: DBDocument) -> Document:

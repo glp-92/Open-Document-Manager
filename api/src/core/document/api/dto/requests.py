@@ -1,4 +1,5 @@
 from typing import Literal
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -12,8 +13,5 @@ class DocumentFilters(BaseModel):
 
 
 class NewDocumentRequest(BaseModel):
-    filename: str
-
-
-class UpdateDocumentRequest(BaseModel):
+    chat_id: UUID
     filename: str
