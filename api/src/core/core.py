@@ -14,7 +14,7 @@ from fastapi import FastAPI
 
 
 class Core:
-    app = FastAPI(title="FAIR Application Server")
+    app = FastAPI(title="Open Document Manager Core")
 
     def __init__(self):
         self._set_repositories()

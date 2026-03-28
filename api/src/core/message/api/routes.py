@@ -1,9 +1,11 @@
 import traceback
 from typing import Annotated
+from uuid import UUID
 
 from core.message.api.dto.requests import MessageFilters, NewMessageRequest
 from core.message.api.dto.responses import MessageListResponse, MessageResponse
 from core.message.application.service import MessageService
+from core.message.exceptions.workspace import MessageNotFoundError
 from db.sql_alchemy_unit_of_work import SqlAlchemyUnitOfWork, get_db
 from fastapi import APIRouter, Depends, Query
 from fastapi.exceptions import HTTPException
@@ -32,6 +34,16 @@ class MessageRouter:
         async def create_message(new_message_request: NewMessageRequest, uow: SqlAlchemyUnitOfWork = Depends(get_db)):
             try:
                 return self.message_service.create_message(session=uow.session, new_message_request=new_message_request)
+            except (ValidationError, Exception):
+                traceback.print_exc()
+                raise HTTPException(status_code=400, detail="bad request")
+
+        @self.router.delete("/{message_id}", status_code=204)
+        async def delete_message(message_id: UUID, uow: SqlAlchemyUnitOfWork = Depends(get_db)):
+            try:
+                return self.message_service.delete_message_by_id(session=uow.session, message_id=message_id)
+            except MessageNotFoundError:
+                raise HTTPException(status_code=404, detail="not found")
             except (ValidationError, Exception):
                 traceback.print_exc()
                 raise HTTPException(status_code=400, detail="bad request")

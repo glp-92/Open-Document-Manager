@@ -1,6 +1,9 @@
+from uuid import UUID
+
 from core.message.api.dto.requests import MessageFilters, NewMessageRequest
 from core.message.api.dto.responses import MessageListResponse, MessageResponse
 from core.message.domain.model import Message
+from core.message.exceptions.workspace import MessageNotFoundError
 from core.message.infrastructure.db_model import DBMessage
 from core.message.infrastructure.repository_impl import MessageRepositoryImpl
 from sqlalchemy.orm import Session
@@ -26,3 +29,9 @@ class MessageService:
             ],
             total=total,
         )
+
+    def delete_message_by_id(self, session: Session, message_id: UUID):
+        deleted: bool = self.message_repository_impl.delete_by_id(session=session, id=message_id)
+        if not deleted:
+            raise MessageNotFoundError(message_id=message_id)
+        return

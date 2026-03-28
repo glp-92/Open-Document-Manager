@@ -1,8 +1,10 @@
+from uuid import UUID
+
 from core.message.api.dto.requests import MessageFilters
 from core.message.domain.model import Message
 from core.message.domain.repository import MessageRepository
 from core.message.infrastructure.db_model import DBMessage
-from sqlalchemy import Column, Select, func, select
+from sqlalchemy import Column, Result, Select, delete, func, select
 from sqlalchemy.orm import Session
 
 
@@ -40,3 +42,9 @@ class MessageRepositoryImpl(MessageRepository):
         result = session.execute(stmt)
         db_messages: list[DBMessage] = result.scalars().all()
         return db_messages, total
+
+    @staticmethod
+    def delete_by_id(session: Session, id: UUID) -> bool:
+        stmt = delete(DBMessage).where(DBMessage.id == id)
+        result: Result = session.execute(stmt)
+        return result.rowcount > 0
