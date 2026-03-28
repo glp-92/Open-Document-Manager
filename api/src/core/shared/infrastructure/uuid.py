@@ -14,7 +14,7 @@ class UUID(TypeDecorator):
 
     def process_bind_param(self, value: uuid.UUID | str | None, dialect: Dialect):  # noqa: ARG002
         """
-        When data is sent to database
+        Data sent to db
         """
         if value is None:
             return None
@@ -26,7 +26,7 @@ class UUID(TypeDecorator):
 
     def process_result_value(self, value: bytes | None, dialect: Dialect):  # noqa: ARG002
         """
-        When data is received from database
+        Data received from db
         """
         if value is None:
             return None

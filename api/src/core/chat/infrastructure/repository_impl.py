@@ -1,8 +1,10 @@
+from uuid import UUID
+
 from core.chat.api.dto.requests import ChatFilters
 from core.chat.domain.model import Chat
 from core.chat.domain.repository import ChatRepository
 from core.chat.infrastructure.db_model import DBChat
-from sqlalchemy import Column, Select, func, select
+from sqlalchemy import Column, Result, Select, delete, func, select
 from sqlalchemy.orm import Session
 
 
@@ -38,3 +40,9 @@ class ChatRepositoryImpl(ChatRepository):
         result = session.execute(stmt)
         db_chats: list[DBChat] = result.scalars().all()
         return db_chats, total
+
+    @staticmethod
+    def delete_by_id(session: Session, id: UUID) -> bool:
+        stmt = delete(DBChat).where(DBChat.id == id)
+        result: Result = session.execute(stmt)
+        return result.rowcount > 0

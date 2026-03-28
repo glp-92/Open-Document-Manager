@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from core.chat.infrastructure.db_model import DBChat
 from core.message.domain.model import Message, Owner
 from core.shared.infrastructure.timestamps import gen_utc_timestamp
 from core.shared.infrastructure.uuid import UUID, gen_uuid
 from db.sql_alchemy_unit_of_work import Base
-from sqlalchemy import TEXT, Column, DateTime, Enum
+from sqlalchemy import TEXT, Column, DateTime, Enum, ForeignKey
+from sqlalchemy.orm import relationship
 
 
 class DBMessage(Base):
@@ -20,6 +22,8 @@ class DBMessage(Base):
         default=gen_utc_timestamp,
         onupdate=gen_utc_timestamp,
     )
+    chat_id = Column(UUID, ForeignKey(DBChat.id, ondelete="CASCADE"), nullable=False)
+    chat = relationship("DBChat", back_populates="messages")
 
     @staticmethod
     def to_domain_object(db_message: DBMessage) -> Message:

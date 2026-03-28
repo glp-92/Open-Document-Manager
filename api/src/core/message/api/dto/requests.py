@@ -1,4 +1,5 @@
 from typing import Literal
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -13,5 +14,6 @@ class MessageFilters(BaseModel):
 
 
 class NewMessageRequest(BaseModel):
+    chat_id: UUID
     owner: Literal["human", "ai"] = "human"
     content: str

@@ -1,6 +1,9 @@
+from uuid import UUID
+
 from core.chat.api.dto.requests import ChatFilters, NewChatRequest
 from core.chat.api.dto.responses import ChatListResponse, ChatResponse
 from core.chat.domain.model import Chat
+from core.chat.exceptions.chat import ChatNotFoundError
 from core.chat.infrastructure.db_model import DBChat
 from core.chat.infrastructure.repository_impl import ChatRepositoryImpl
 from sqlalchemy.orm import Session
@@ -24,3 +27,9 @@ class ChatService:
             chats=[ChatResponse.model_validate(obj=db_chat, from_attributes=True) for db_chat in db_chats],
             total=total,
         )
+
+    def delete_chat_by_id(self, session: Session, chat_id: UUID):
+        deleted: bool = self.chat_repository_impl.delete_by_id(session=session, id=chat_id)
+        if not deleted:
+            raise ChatNotFoundError(workspace_id=chat_id)
+        return

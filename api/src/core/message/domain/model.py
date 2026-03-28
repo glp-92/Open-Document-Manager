@@ -12,6 +12,7 @@ class Owner(StrEnum):
 
 class Message(BaseModel):
     id: UUID | None = None
+    chat_id: UUID
     owner: Owner
     content: str
     created_at: datetime | None = None
