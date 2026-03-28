@@ -24,6 +24,8 @@ class ChatRepositoryImpl(ChatRepository):
         def _apply_filters(stmt: Select):
             if filters.name:
                 stmt = stmt.where(DBChat.name.contains(filters.name))
+            if filters.workspace_id:
+                stmt = stmt.where(DBChat.workspace_id == filters.workspace_id)
             return stmt
 
         total_stmt = select(func.count()).select_from(DBChat)

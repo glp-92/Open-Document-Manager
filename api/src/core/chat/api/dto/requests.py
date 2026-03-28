@@ -7,9 +7,10 @@ from pydantic import BaseModel
 class ChatFilters(BaseModel):
     limit: int | None = None
     offset: int | None = None
-    order_by: Literal["name", "created_at", "updated_at"] = "updated_at"
+    order_by: Literal["name", "workspace_id", "created_at", "updated_at"] = "updated_at"
     order: Literal["asc", "desc"] = "desc"
     name: str | None = None
+    workspace_id: UUID | None = None
 
 
 class NewChatRequest(BaseModel):
