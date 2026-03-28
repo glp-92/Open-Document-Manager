@@ -13,3 +13,7 @@ class WorkspaceFilters(BaseModel):
 
 class NewWorkspaceRequest(BaseModel):
     name: str
+
+
+class UpdateWorkspaceRequest(BaseModel):
+    name: str

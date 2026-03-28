@@ -1,12 +1,17 @@
 services:
-  api:
-    build:
-      context: ./api
-    restart: on-failure
-    environment:
-      DB_HOST: db
-    ports:
-      - "127.0.0.1:8080:8080"
+  # api:
+  #   build:
+  #     context: ./api
+  #   restart: on-failure
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #   env_file: .env
+  #   environment:
+  #     DB_HOST: db
+  #     DB_PORT: 3306
+  #   ports:
+  #     - "127.0.0.1:8080:8080"
 
   ollama-server:
     image: ollama/ollama:latest
@@ -53,15 +58,8 @@ services:
       MARIADB_USER: ${DB_USR}
       MARIADB_PASSWORD: ${DB_PWD}
     healthcheck:
-      test:
-        [
-          "CMD",
-          "mysqladmin",
-          "ping",
-          "-h",
-          "localhost",
-          "-u${DB_USR}",
-          "-p${DB_PWD}",
-        ]
-      interval: 10s
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
       retries: 10
+      start_period: 30s

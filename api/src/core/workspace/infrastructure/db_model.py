@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from core.workspace.domain.model import Workspace
-from db.sql_alchemy_unit_of_work import Base, gen_utc_timestamp, gen_uuid
+from db.sql_alchemy_unit_of_work import Base
+from db.utils import gen_utc_timestamp, gen_uuid
 from sqlalchemy import Column, DateTime, String
 from sqlalchemy.dialects.mysql import BINARY
 

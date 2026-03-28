@@ -1,0 +1,37 @@
+import traceback
+from typing import Annotated
+
+from core.message.api.dto.requests import MessageFilters, NewMessageRequest
+from core.message.api.dto.responses import MessageListResponse, MessageResponse
+from core.message.application.service import MessageService
+from db.sql_alchemy_unit_of_work import SqlAlchemyUnitOfWork, get_db
+from fastapi import APIRouter, Depends, Query
+from fastapi.exceptions import HTTPException
+from pydantic import ValidationError
+
+
+class MessageRouter:
+    router = APIRouter()
+
+    def __init__(self, message_service: MessageService):
+        self.message_service = message_service
+        self._register_routes()
+
+    def _register_routes(self):
+        @self.router.get("", status_code=200, response_model=MessageListResponse)
+        async def find_messages_with_filters_pageable(
+            filters: Annotated[MessageFilters, Query()], uow: SqlAlchemyUnitOfWork = Depends(get_db)
+        ):
+            try:
+                return self.message_service.find_messages_with_filters_pageable(session=uow.session, filters=filters)
+            except (ValidationError, Exception):
+                traceback.print_exc()
+                raise HTTPException(status_code=400, detail="bad request")
+
+        @self.router.post("", status_code=201, response_model=MessageResponse)
+        async def create_message(new_message_request: NewMessageRequest, uow: SqlAlchemyUnitOfWork = Depends(get_db)):
+            try:
+                return self.message_service.create_message(session=uow.session, new_message_request=new_message_request)
+            except (ValidationError, Exception):
+                traceback.print_exc()
+                raise HTTPException(status_code=400, detail="bad request")
