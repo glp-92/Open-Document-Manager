@@ -34,7 +34,7 @@ logger.add(
     sys.stdout,
     level="INFO",
     format=LoggerFormat,
-    serialize="False",
+    serialize=False,
     enqueue=True,
     diagnose=False,
 )
