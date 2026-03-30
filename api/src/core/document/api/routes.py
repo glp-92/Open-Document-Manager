@@ -6,11 +6,12 @@ from core.document.api.dto.requests import DocumentFilters, DocumentStorageWebho
 from core.document.api.dto.responses import DocumentListResponse, DocumentResponse, DocumentStorageWebhookResponse
 from core.document.application.service import DocumentService
 from core.document.exceptions.document import DocumentNotFoundError
-from db.sql_alchemy_unit_of_work import SqlAlchemyUnitOfWork, get_db
+from db.sql_alchemy_unit_of_work import get_db
 from fastapi import APIRouter, Depends, Query
 from fastapi.exceptions import HTTPException
 from pydantic import ValidationError
-from storage.s3_adapter import S3UnitOfWork, get_storage
+from sqlalchemy.orm import Session
+from storage.s3_adapter import S3Adapter, get_storage
 
 
 class DocumentRouter:
@@ -23,10 +24,10 @@ class DocumentRouter:
     def _register_routes(self):
         @self.router.get("", status_code=200, response_model=DocumentListResponse)
         async def find_documents_with_filters_pageable(
-            filters: Annotated[DocumentFilters, Query()], uow: SqlAlchemyUnitOfWork = Depends(get_db)
+            filters: Annotated[DocumentFilters, Query()], sql_session: Session = Depends(get_db)
         ):
             try:
-                return self.document_service.find_documents_with_filters_pageable(session=uow.session, filters=filters)
+                return self.document_service.find_documents_with_filters_pageable(session=sql_session, filters=filters)
             except (ValidationError, Exception):
                 traceback.print_exc()
                 raise HTTPException(status_code=400, detail="bad request")
@@ -34,12 +35,12 @@ class DocumentRouter:
         @self.router.post("", status_code=201, response_model=DocumentResponse)
         async def create_document(
             new_document_request: NewDocumentRequest,
-            sql_uow: SqlAlchemyUnitOfWork = Depends(get_db),
-            s3_uow: S3UnitOfWork = Depends(get_storage),  # noqa: ARG001
+            sql_session: Session = Depends(get_db),
+            s3_adapter: S3Adapter = Depends(get_storage),  # noqa: ARG001
         ):
             try:
                 return self.document_service.create_document(
-                    session=sql_uow.session, new_document_request=new_document_request
+                    session=sql_session, new_document_request=new_document_request
                 )
             except (ValidationError, Exception):
                 traceback.print_exc()
@@ -56,9 +57,9 @@ class DocumentRouter:
                 raise HTTPException(status_code=400, detail="bad request")
 
         @self.router.delete("/{document_id}", status_code=204)
-        async def delete_document(document_id: UUID, uow: SqlAlchemyUnitOfWork = Depends(get_db)):
+        async def delete_document(document_id: UUID, sql_session: Session = Depends(get_db)):
             try:
-                return self.document_service.delete_document_by_id(session=uow.session, document_id=document_id)
+                return self.document_service.delete_document_by_id(session=sql_session, document_id=document_id)
             except DocumentNotFoundError:
                 raise HTTPException(status_code=404, detail="not found")
             except (ValidationError, Exception):

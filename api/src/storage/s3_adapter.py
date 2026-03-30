@@ -4,7 +4,7 @@ from config.config import config
 from mypy_boto3_s3 import S3Client
 
 
-class S3UnitOfWork:
+class S3Adapter:
     def __init__(self):
         self.client: S3Client = boto3.client(
             service_name="s3",
@@ -24,5 +24,5 @@ class S3UnitOfWork:
         )
 
 
-def get_storage() -> S3UnitOfWork:
-    return S3UnitOfWork()
+def get_storage() -> S3Adapter:
+    return S3Adapter()

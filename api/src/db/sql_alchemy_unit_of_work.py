@@ -1,4 +1,5 @@
 from config.config import config
+from config.logger import logger
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, declarative_base, sessionmaker
 
@@ -10,15 +11,11 @@ engine: Engine = create_engine(url=engine_url, pool_pre_ping=True, pool_recycle=
 session_local: sessionmaker = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 
-class SqlAlchemyUnitOfWork:
-    def __init__(self, session: Session):
-        self.session = session
-
-
 def get_db():
     session: Session = session_local()
+    logger.info("new sql session: ", id(session))
     try:
-        yield SqlAlchemyUnitOfWork(session)
+        yield session
         session.commit()
     except Exception:
         session.rollback()

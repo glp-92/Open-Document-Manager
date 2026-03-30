@@ -6,10 +6,11 @@ from core.workspace.api.dto.requests import NewWorkspaceRequest, WorkspaceFilter
 from core.workspace.api.dto.responses import WorkspaceListResponse, WorkspaceResponse
 from core.workspace.application.service import WorkspaceService
 from core.workspace.exceptions.workspace import WorkspaceNotFoundError
-from db.sql_alchemy_unit_of_work import SqlAlchemyUnitOfWork, get_db
+from db.sql_alchemy_unit_of_work import get_db
 from fastapi import APIRouter, Depends, Query
 from fastapi.exceptions import HTTPException
 from pydantic import ValidationError
+from sqlalchemy.orm import Session
 
 
 class WorkspaceRouter:
@@ -22,32 +23,30 @@ class WorkspaceRouter:
     def _register_routes(self):
         @self.router.get("", status_code=200, response_model=WorkspaceListResponse)
         async def find_workspaces_with_filters_pageable(
-            filters: Annotated[WorkspaceFilters, Query()], uow: SqlAlchemyUnitOfWork = Depends(get_db)
+            filters: Annotated[WorkspaceFilters, Query()], sql_session: Session = Depends(get_db)
         ):
             try:
                 return self.workspace_service.find_workspaces_with_filters_pageable(
-                    session=uow.session, filters=filters
+                    session=sql_session, filters=filters
                 )
             except (ValidationError, Exception):
                 traceback.print_exc()
                 raise HTTPException(status_code=400, detail="bad request")
 
         @self.router.post("", status_code=201, response_model=WorkspaceResponse)
-        async def create_workspace(
-            new_workspace_request: NewWorkspaceRequest, uow: SqlAlchemyUnitOfWork = Depends(get_db)
-        ):
+        async def create_workspace(new_workspace_request: NewWorkspaceRequest, sql_session: Session = Depends(get_db)):
             try:
                 return self.workspace_service.create_workspace(
-                    session=uow.session, new_workspace_request=new_workspace_request
+                    session=sql_session, new_workspace_request=new_workspace_request
                 )
             except (ValidationError, Exception):
                 traceback.print_exc()
                 raise HTTPException(status_code=400, detail="bad request")
 
         @self.router.delete("/{workspace_id}", status_code=204)
-        async def delete_workspace(workspace_id: UUID, uow: SqlAlchemyUnitOfWork = Depends(get_db)):
+        async def delete_workspace(workspace_id: UUID, sql_session: Session = Depends(get_db)):
             try:
-                return self.workspace_service.delete_workspace_by_id(session=uow.session, workspace_id=workspace_id)
+                return self.workspace_service.delete_workspace_by_id(session=sql_session, workspace_id=workspace_id)
             except WorkspaceNotFoundError:
                 raise HTTPException(status_code=404, detail="not found")
             except (ValidationError, Exception):
