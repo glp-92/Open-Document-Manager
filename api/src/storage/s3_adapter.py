@@ -1,6 +1,10 @@
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
 import boto3
-from botocore.client import Config
+from botocore.client import ClientError, Config
 from config.config import config
+from config.logger import logger
 from mypy_boto3_s3 import S3Client
 
 
@@ -13,16 +17,24 @@ class S3Adapter:
             endpoint_url=f"http://{config.storage_host}:{config.storage_port}",
             config=Config(signature_version="s3v4"),
         )
+        self._executor = ThreadPoolExecutor(max_workers=10)
 
-    def get_upload_url(
-        self,
-        bucket: str,
-        filename: str,
-    ) -> str:
-        return self.client.generate_presigned_url(
-            "put_object", Params={"Bucket": bucket, "Key": filename}, ExpiresIn=1800
-        )
+    def get_upload_url(self, bucket: str, filename: str, expires_in: int = 1800) -> str:
+        try:
+            return self.client.generate_presigned_url(
+                "put_object", Params={"Bucket": bucket, "Key": filename}, ExpiresIn=expires_in
+            )
+        except ClientError as e:
+            logger.error(f"presigned url retrieve error: {e}")
+            raise
+
+    async def delete_file(self, bucket: str, filename: str):
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(self._executor, self.client.delete_object, bucket, filename)
+
+
+_storage_adapter = S3Adapter()
 
 
 def get_storage() -> S3Adapter:
-    return S3Adapter()
+    return _storage_adapter
