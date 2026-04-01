@@ -5,7 +5,7 @@ from core.document.domain.model import Document
 from core.document.domain.repository import DocumentRepository
 from core.document.infrastructure.db_model import DBDocument
 from sqlalchemy import Column, Result, Select, delete, func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class DocumentRepositoryImpl(DocumentRepository):
@@ -13,14 +13,16 @@ class DocumentRepositoryImpl(DocumentRepository):
         return
 
     @staticmethod
-    def save(session: Session, document: Document) -> DBDocument:
+    async def save(session: AsyncSession, document: Document) -> DBDocument:
         db_document: DBDocument = DBDocument.from_domain_object(document=document)
         session.add(db_document)
-        session.flush()
+        await session.flush()
         return db_document
 
     @staticmethod
-    def find_many_filtered_pageable(session: Session, filters: DocumentFilters) -> tuple[list[DBDocument], int]:
+    async def find_many_filtered_pageable(
+        session: AsyncSession, filters: DocumentFilters
+    ) -> tuple[list[DBDocument], int]:
         def _apply_filters(stmt: Select):
             if filters.filename:
                 stmt = stmt.where(DBDocument.filename.contains(filters.filename))
@@ -30,7 +32,7 @@ class DocumentRepositoryImpl(DocumentRepository):
 
         total_stmt = select(func.count()).select_from(DBDocument)
         total_stmt = _apply_filters(stmt=total_stmt)
-        total: int = session.execute(total_stmt).scalar_one()
+        total: int = (await session.execute(total_stmt)).scalar_one()
         stmt = select(DBDocument)
         stmt = _apply_filters(stmt=stmt)
         column: Column = getattr(DBDocument, filters.order_by)
@@ -39,12 +41,12 @@ class DocumentRepositoryImpl(DocumentRepository):
             stmt = stmt.limit(filters.limit)
         if filters.offset is not None:
             stmt = stmt.offset(filters.offset)
-        result = session.execute(stmt)
+        result = await session.execute(stmt)
         db_documents: list[DBDocument] = result.scalars().all()
         return db_documents, total
 
     @staticmethod
-    def delete_by_id(session: Session, id: UUID) -> bool:
-        stmt = delete(DBDocument).where(DBDocument.id == id)
-        result: Result = session.execute(stmt)
-        return result.rowcount > 0
+    async def delete_by_id(session: AsyncSession, id: UUID) -> UUID | None:
+        stmt = delete(DBDocument).where(DBDocument.id == id).returning(DBDocument.id)
+        result: Result = await session.execute(stmt)
+        return result.scalar_one_or_none()

@@ -1,24 +1,25 @@
 from __future__ import annotations
 
-from core.shared.infrastructure.timestamps import gen_utc_timestamp
-from core.shared.infrastructure.uuid import UUID, gen_uuid
+from uuid import uuid4
+
 from core.workspace.domain.model import Workspace
 from db.sql_alchemy_unit_of_work import Base
-from sqlalchemy import Column, DateTime, String
+from sqlalchemy import Column, DateTime, String, func
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 
 class DBWorkspace(Base):
     __tablename__ = "workspaces"
 
-    id = Column(UUID, primary_key=True, default=gen_uuid)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(100), nullable=False)
-    created_at = Column(DateTime, nullable=True, default=gen_utc_timestamp)
+    created_at = Column(DateTime(timezone=True), nullable=True, server_default=func.now())
     updated_at = Column(
-        DateTime,
+        DateTime(timezone=True),
         nullable=True,
-        default=gen_utc_timestamp,
-        onupdate=gen_utc_timestamp,
+        server_default=func.now(),
+        server_onupdate=func.now(),
     )
     chats = relationship("DBChat", back_populates="workspace", passive_deletes=True)
 

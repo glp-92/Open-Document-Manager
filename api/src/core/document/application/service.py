@@ -13,16 +13,17 @@ class DocumentService:
     def __init__(self, document_repository_impl: DocumentRepositoryImpl):
         self.document_repository_impl = document_repository_impl
 
-    def create_document(self, session: Session, new_document_request: NewDocumentRequest) -> DocumentResponse:
+    async def create_document(self, session: Session, new_document_request: NewDocumentRequest) -> DocumentResponse:
         document: Document = Document(**new_document_request.model_dump())
-        return DocumentResponse.model_validate(
-            self.document_repository_impl.save(session=session, document=document), from_attributes=True
-        )
+        db_document = await self.document_repository_impl.save(session=session, document=document)
+        return DocumentResponse.model_validate(db_document, from_attributes=True)
 
-    def find_documents_with_filters_pageable(self, session: Session, filters: DocumentFilters) -> DocumentListResponse:
+    async def find_documents_with_filters_pageable(
+        self, session: Session, filters: DocumentFilters
+    ) -> DocumentListResponse:
         db_documents: list[DBDocument] = []
         total: int = 0
-        db_documents, total = self.document_repository_impl.find_many_filtered_pageable(
+        db_documents, total = await self.document_repository_impl.find_many_filtered_pageable(
             session=session, filters=filters
         )
         return DocumentListResponse(
@@ -32,8 +33,8 @@ class DocumentService:
             total=total,
         )
 
-    def delete_document_by_id(self, session: Session, document_id: UUID):
-        deleted: bool = self.document_repository_impl.delete_by_id(session=session, id=document_id)
-        if not deleted:
+    async def delete_document_by_id(self, session: Session, document_id: UUID):
+        deleted_id: UUID | None = await self.document_repository_impl.delete_by_id(session=session, id=document_id)
+        if deleted_id is None:
             raise DocumentNotFoundError(workspace_id=document_id)
         return

@@ -4,16 +4,14 @@ from config.middlewares import add_middlewares
 from core.core import Core
 from db.sql_alchemy_unit_of_work import Base, engine
 from fastapi import FastAPI
-from sqlalchemy_utils import create_database, database_exists
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    if not database_exists(engine.url):
-        create_database(engine.url)
-    Base.metadata.create_all(engine)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     yield
-    engine.dispose()
+    await engine.dispose()
 
 
 def create_app() -> FastAPI:

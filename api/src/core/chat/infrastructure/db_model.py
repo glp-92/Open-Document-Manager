@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from datetime import datetime
+from uuid import uuid4
 
 from core.chat.domain.model import Chat
-from core.shared.infrastructure.timestamps import gen_string_timestamp, gen_utc_timestamp
-from core.shared.infrastructure.uuid import UUID, gen_uuid
+from core.shared.infrastructure.timestamps import gen_string_timestamp
 from core.workspace.infrastructure.db_model import DBWorkspace
 from db.sql_alchemy_unit_of_work import Base
-from sqlalchemy import Column, DateTime, ExecutionContext, ForeignKey, String
+from sqlalchemy import Column, DateTime, ExecutionContext, ForeignKey, String, func
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 
@@ -21,15 +22,10 @@ def gen_default_name_from_creation_date(context: ExecutionContext):
 class DBChat(Base):
     __tablename__ = "chats"
 
-    id = Column(UUID, primary_key=True, default=gen_uuid)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(100), nullable=False, default=gen_default_name_from_creation_date)
-    created_at = Column(DateTime, nullable=True, default=gen_utc_timestamp)
-    updated_at = Column(
-        DateTime,
-        nullable=True,
-        default=gen_utc_timestamp,
-        onupdate=gen_utc_timestamp,
-    )
+    created_at = Column(DateTime(timezone=True), nullable=True, server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), nullable=True, server_default=func.now(), server_onupdate=func.now())
     workspace_id = Column(UUID, ForeignKey(DBWorkspace.id, ondelete="CASCADE"), nullable=False)
     workspace = relationship("DBWorkspace", back_populates="chats")
     messages = relationship("DBMessage", back_populates="chat", passive_deletes=True)

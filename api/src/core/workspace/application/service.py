@@ -13,18 +13,17 @@ class WorkspaceService:
     def __init__(self, workspace_repository_impl: WorkspaceRepositoryImpl):
         self.workspace_repository_impl = workspace_repository_impl
 
-    def create_workspace(self, session: Session, new_workspace_request: NewWorkspaceRequest) -> WorkspaceResponse:
+    async def create_workspace(self, session: Session, new_workspace_request: NewWorkspaceRequest) -> WorkspaceResponse:
         workspace: Workspace = Workspace(**new_workspace_request.model_dump())
-        return WorkspaceResponse.model_validate(
-            self.workspace_repository_impl.save(session=session, workspace=workspace), from_attributes=True
-        )
+        db_workspace: DBWorkspace = await self.workspace_repository_impl.save(session=session, workspace=workspace)
+        return WorkspaceResponse.model_validate(db_workspace, from_attributes=True)
 
-    def find_workspaces_with_filters_pageable(
+    async def find_workspaces_with_filters_pageable(
         self, session: Session, filters: WorkspaceFilters
     ) -> WorkspaceListResponse:
         db_workspaces: list[DBWorkspace] = []
         total: int = 0
-        db_workspaces, total = self.workspace_repository_impl.find_many_filtered_pageable(
+        db_workspaces, total = await self.workspace_repository_impl.find_many_filtered_pageable(
             session=session, filters=filters
         )
         return WorkspaceListResponse(
@@ -35,8 +34,8 @@ class WorkspaceService:
             total=total,
         )
 
-    def delete_workspace_by_id(self, session: Session, workspace_id: UUID):
-        deleted: bool = self.workspace_repository_impl.delete_by_id(session=session, id=workspace_id)
-        if not deleted:
+    async def delete_workspace_by_id(self, session: Session, workspace_id: UUID):
+        deleted_id: UUID | None = await self.workspace_repository_impl.delete_by_id(session=session, id=workspace_id)
+        if deleted_id is None:
             raise WorkspaceNotFoundError(workspace_id=workspace_id)
         return

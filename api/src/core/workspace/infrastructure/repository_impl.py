@@ -5,7 +5,7 @@ from core.workspace.domain.model import Workspace
 from core.workspace.domain.repository import WorkspaceRepository
 from core.workspace.infrastructure.db_model import DBWorkspace
 from sqlalchemy import Column, Result, Select, delete, func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class WorkspaceRepositoryImpl(WorkspaceRepository):
@@ -13,14 +13,16 @@ class WorkspaceRepositoryImpl(WorkspaceRepository):
         return
 
     @staticmethod
-    def save(session: Session, workspace: Workspace) -> DBWorkspace:
+    async def save(session: AsyncSession, workspace: Workspace) -> DBWorkspace:
         db_workspace: DBWorkspace = DBWorkspace.from_domain_object(workspace=workspace)
         session.add(db_workspace)
-        session.flush()
+        await session.flush()
         return db_workspace
 
     @staticmethod
-    def find_many_filtered_pageable(session: Session, filters: WorkspaceFilters) -> tuple[list[DBWorkspace], int]:
+    async def find_many_filtered_pageable(
+        session: AsyncSession, filters: WorkspaceFilters
+    ) -> tuple[list[DBWorkspace], int]:
         def _apply_filters(stmt: Select):
             if filters.name:
                 stmt = stmt.where(DBWorkspace.name.contains(filters.name))
@@ -28,7 +30,7 @@ class WorkspaceRepositoryImpl(WorkspaceRepository):
 
         total_stmt = select(func.count()).select_from(DBWorkspace)
         total_stmt = _apply_filters(stmt=total_stmt)
-        total: int = session.execute(total_stmt).scalar_one()
+        total: int = (await session.execute(total_stmt)).scalar_one()
         stmt = select(DBWorkspace)
         stmt = _apply_filters(stmt=stmt)
         column: Column = getattr(DBWorkspace, filters.order_by)
@@ -37,12 +39,12 @@ class WorkspaceRepositoryImpl(WorkspaceRepository):
             stmt = stmt.limit(filters.limit)
         if filters.offset is not None:
             stmt = stmt.offset(filters.offset)
-        result = session.execute(stmt)
+        result = await session.execute(stmt)
         db_workspaces: list[DBWorkspace] = result.scalars().all()
         return db_workspaces, total
 
     @staticmethod
-    def delete_by_id(session: Session, id: UUID) -> bool:
-        stmt = delete(DBWorkspace).where(DBWorkspace.id == id)
-        result: Result = session.execute(stmt)
-        return result.rowcount > 0
+    async def delete_by_id(session: AsyncSession, id: UUID) -> UUID | None:
+        stmt = delete(DBWorkspace).where(DBWorkspace.id == id).returning(DBWorkspace.id)
+        result: Result = await session.execute(stmt)
+        return result.scalar_one_or_none()

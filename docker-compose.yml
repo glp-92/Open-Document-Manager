@@ -46,23 +46,21 @@ services:
               capabilities: [gpu]
 
   db:
-    image: mariadb:12.0.2
+    image: postgres:16
     restart: on-failure
     security_opt:
       - "no-new-privileges:true"
     ports:
-      - "127.0.0.1:${DB_PORT}:3306"
+      - "127.0.0.1:5432:5432"
     environment:
-      MARIADB_ROOT_PASSWORD: ${DB_PWD}
-      MARIADB_DATABASE: ${DB_NAME}
-      MARIADB_USER: ${DB_USR}
-      MARIADB_PASSWORD: ${DB_PWD}
+      POSTGRES_PASSWORD: ${DB_PWD}
+      POSTGRES_USER: ${DB_USR}
+      POSTGRES_DB: ${DB_NAME}
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
+      test: pg_isready -U ${DB_USR} -d ${DB_NAME}
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
   seaweedfs:
     image: chrislusf/seaweedfs:latest

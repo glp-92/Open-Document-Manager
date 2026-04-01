@@ -7,6 +7,12 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 uv --version
 ```
 
+To be able to use `psycopg3`
+
+```bash
+apt install libpq-dev gcc
+```
+
 `pyproject.toml` is already provided with Python version, needed dependencies and configuration for code static analysis
 
 `uv sync --all-groups --no-cache` to install all dependencies
