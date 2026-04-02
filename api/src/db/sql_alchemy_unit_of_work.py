@@ -13,7 +13,7 @@ engine_url: str = (
     f"postgresql+psycopg://{config.db_usr}:{config.db_pwd}@{config.db_host}:{config.db_port}/{config.db_name}"
 )
 
-engine: AsyncEngine = create_async_engine(url=engine_url, pool_pre_ping=True, pool_recycle=1800, echo=True)
+engine: AsyncEngine = create_async_engine(url=engine_url, pool_pre_ping=True, pool_recycle=1800)  # , echo=True)
 
 session_local = async_sessionmaker(
     bind=engine,

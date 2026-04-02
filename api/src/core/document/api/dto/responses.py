@@ -15,6 +15,14 @@ class DocumentResponse(BaseModel):
     updated_at: datetime
 
 
+class UploadDocumentOptimisticResponse(BaseModel):
+    id: UUID
+    chat_id: UUID
+    filename: str
+    presigned_url: str
+    created_at: datetime
+
+
 class DocumentStorageWebhookResponse(BaseModel):
     status: Literal["ok", "error"] = "ok"
 

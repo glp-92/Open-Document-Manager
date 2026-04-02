@@ -3,7 +3,11 @@ from typing import Annotated
 from uuid import UUID
 
 from core.document.api.dto.requests import DocumentFilters, DocumentStorageWebhookRequest, NewDocumentRequest
-from core.document.api.dto.responses import DocumentListResponse, DocumentResponse, DocumentStorageWebhookResponse
+from core.document.api.dto.responses import (
+    DocumentListResponse,
+    DocumentStorageWebhookResponse,
+    UploadDocumentOptimisticResponse,
+)
 from core.document.application.service import DocumentService
 from core.document.exceptions.document import DocumentNotFoundError
 from db.sql_alchemy_unit_of_work import get_db
@@ -34,15 +38,15 @@ class DocumentRouter:
                 traceback.print_exc()
                 raise HTTPException(status_code=400, detail="bad request")
 
-        @self.router.post("", status_code=201, response_model=DocumentResponse)
+        @self.router.post("", status_code=201, response_model=UploadDocumentOptimisticResponse)
         async def create_document(
             new_document_request: NewDocumentRequest,
             sql_session: AsyncSession = Depends(get_db),
-            s3_adapter: S3Adapter = Depends(get_storage),  # noqa: ARG001
+            s3_adapter: S3Adapter = Depends(get_storage),
         ):
             try:
                 return await self.document_service.create_document(
-                    session=sql_session, new_document_request=new_document_request
+                    session=sql_session, storage_adapter=s3_adapter, new_document_request=new_document_request
                 )
             except (ValidationError, Exception):
                 traceback.print_exc()
@@ -54,6 +58,7 @@ class DocumentRouter:
         ):
             try:
                 print(document_storage_webhook_request)  # noqa: T201
+                return DocumentStorageWebhookResponse(status="ok")
             except (ValidationError, Exception):
                 traceback.print_exc()
                 raise HTTPException(status_code=400, detail="bad request")

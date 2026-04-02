@@ -19,6 +19,7 @@ class Config:
     storage_usr: str
     storage_pwd: str
     storage_bucket: str
+    storage_presigned_url_expiration: int
     ollama_url: str
 
 
@@ -33,5 +34,6 @@ config = Config(
     storage_usr=os.environ.get("STORAGE_USR", "testuser"),
     storage_pwd=os.environ.get("STORAGE_PWD", "testpwd"),
     storage_bucket=os.environ.get("STORAGE_BUCKET", "testbucket"),
+    storage_presigned_url_expiration=int(os.environ.get("STORAGE_PRESIGNED_URL_EXPIRATION", 1800)),
     ollama_url=os.environ.get("OLLAMA_URL", "testuser"),
 )

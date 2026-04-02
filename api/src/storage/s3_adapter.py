@@ -17,6 +17,10 @@ class S3Adapter:
             endpoint_url=f"http://{config.storage_host}:{config.storage_port}",
             config=Config(signature_version="s3v4"),
         )
+        try:
+            self.client.create_bucket(Bucket=config.storage_bucket)
+        except self.client.exceptions.BucketAlreadyExists:
+            logger.info(f"bucket {config.storage_bucket} already exists")
         self._executor = ThreadPoolExecutor(max_workers=10)
 
     def get_upload_url(self, bucket: str, filename: str, expires_in: int = 1800) -> str:

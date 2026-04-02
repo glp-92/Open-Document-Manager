@@ -9,3 +9,9 @@ def gen_string_timestamp(timestamp: datetime.datetime | None = None) -> str:
 
 def gen_utc_timestamp() -> datetime.datetime:
     return datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
+
+
+def normalize_timestamps_to_utc(dt: datetime.datetime | None):
+    if dt and dt.tzinfo is None:
+        return dt.replace(tzinfo=datetime.UTC)
+    return dt
