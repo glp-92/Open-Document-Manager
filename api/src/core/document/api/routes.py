@@ -52,13 +52,15 @@ class DocumentRouter:
                 traceback.print_exc()
                 raise HTTPException(status_code=400, detail="bad request")
 
-        @self.router.post("/webhooks", status_code=201, response_model=DocumentStorageWebhookResponse)
+        @self.router.post("/webhooks", status_code=200, response_model=DocumentStorageWebhookResponse)
         async def process_webhooks_from_storage(
-            document_storage_webhook_request: DocumentStorageWebhookRequest,
+            request: DocumentStorageWebhookRequest,
+            sql_session: AsyncSession = Depends(get_db),
         ):
             try:
-                print(document_storage_webhook_request)  # noqa: T201
-                return DocumentStorageWebhookResponse(status="ok")
+                return await self.document_service.process_storage_webhooks(session=sql_session, request=request)
+            except DocumentNotFoundError:
+                raise HTTPException(status_code=404, detail="not found")
             except (ValidationError, Exception):
                 traceback.print_exc()
                 raise HTTPException(status_code=400, detail="bad request")

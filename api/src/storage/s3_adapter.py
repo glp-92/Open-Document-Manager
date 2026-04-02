@@ -1,5 +1,7 @@
 import asyncio
+import os
 from concurrent.futures import ThreadPoolExecutor
+from uuid import UUID
 
 import boto3
 from botocore.client import ClientError, Config
@@ -23,10 +25,12 @@ class S3Adapter:
             logger.info(f"bucket {config.storage_bucket} already exists")
         self._executor = ThreadPoolExecutor(max_workers=10)
 
-    def get_upload_url(self, bucket: str, filename: str, expires_in: int = 1800) -> str:
+    def get_upload_url(self, bucket: str, filename: str, id: UUID, expires_in: int = 1800) -> str:
         try:
             return self.client.generate_presigned_url(
-                "put_object", Params={"Bucket": bucket, "Key": filename}, ExpiresIn=expires_in
+                "put_object",
+                Params={"Bucket": bucket, "Key": f"{id}/{os.path.basename(filename)}"},
+                ExpiresIn=expires_in,
             )
         except ClientError as e:
             logger.error(f"presigned url retrieve error: {e}")

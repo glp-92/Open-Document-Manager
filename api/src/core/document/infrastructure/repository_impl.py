@@ -27,6 +27,8 @@ class DocumentRepositoryImpl(DocumentRepository):
         def _apply_filters(stmt: Select):
             if filters.filename:
                 stmt = stmt.where(DBDocument.filename.contains(filters.filename))
+            if filters.mime:
+                stmt = stmt.where(DBDocument.mime == filters.mime)
             if filters.chat_id:
                 stmt = stmt.where(DBDocument.chat_id == filters.chat_id)
             if filters.from_creation_date:
@@ -53,6 +55,12 @@ class DocumentRepositoryImpl(DocumentRepository):
         result = await session.execute(stmt)
         db_documents: list[DBDocument] = result.scalars().all()
         return db_documents, total
+
+    @staticmethod
+    async def find_by_id(session: AsyncSession, id: UUID) -> DBDocument:
+        stmt = select(DBDocument).where(DBDocument.id == id)
+        db_document: DBDocument = (await session.execute(stmt)).scalar_one_or_none()
+        return db_document
 
     @staticmethod
     async def delete_by_id(session: AsyncSession, id: UUID) -> UUID | None:

@@ -17,6 +17,7 @@ class DBDocument(Base):
     filename = Column(String(100), nullable=False)
     url = Column(String(100), nullable=True)
     size = Column(INTEGER, nullable=True)
+    mime = Column(String(50), nullable=True)
     storage_status = Column(Enum(StorageStatus), nullable=False, default=StorageStatus.PENDING)
     created_at = Column(DateTime(timezone=True), nullable=True, server_default=func.now())
     updated_at = Column(DateTime(timezone=True), nullable=True, server_default=func.now(), server_onupdate=func.now())

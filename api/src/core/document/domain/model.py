@@ -19,5 +19,6 @@ class Document(BaseModel):
     storage_status: StorageStatus = StorageStatus.PENDING
     url: str | None = None
     size: int | None = None
+    mime: str | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None

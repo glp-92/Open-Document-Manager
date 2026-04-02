@@ -11,6 +11,7 @@ class DocumentResponse(BaseModel):
     filename: str
     url: str | None = None
     size: int | None = None
+    mime: str | None = None
     created_at: datetime
     updated_at: datetime
 
