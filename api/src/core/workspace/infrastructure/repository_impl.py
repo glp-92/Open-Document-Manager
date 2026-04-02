@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from core.shared.infrastructure.timestamps import normalize_timestamps_to_utc
 from core.workspace.api.dto.requests import WorkspaceFilters
 from core.workspace.domain.model import Workspace
 from core.workspace.domain.repository import WorkspaceRepository
@@ -26,6 +27,14 @@ class WorkspaceRepositoryImpl(WorkspaceRepository):
         def _apply_filters(stmt: Select):
             if filters.name:
                 stmt = stmt.where(DBWorkspace.name.contains(filters.name))
+            if filters.from_creation_date:
+                stmt = stmt.where(DBWorkspace.created_at >= normalize_timestamps_to_utc(filters.from_creation_date))
+            if filters.to_creation_date:
+                stmt = stmt.where(DBWorkspace.created_at <= normalize_timestamps_to_utc(filters.to_creation_date))
+            if filters.from_update_date:
+                stmt = stmt.where(DBWorkspace.created_at >= normalize_timestamps_to_utc(filters.from_update_date))
+            if filters.to_update_date:
+                stmt = stmt.where(DBWorkspace.created_at <= normalize_timestamps_to_utc(filters.to_update_date))
             return stmt
 
         total_stmt = select(func.count()).select_from(DBWorkspace)

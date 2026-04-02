@@ -4,6 +4,7 @@ from core.document.api.dto.requests import DocumentFilters
 from core.document.domain.model import Document
 from core.document.domain.repository import DocumentRepository
 from core.document.infrastructure.db_model import DBDocument
+from core.shared.infrastructure.timestamps import normalize_timestamps_to_utc
 from sqlalchemy import Column, Result, Select, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -28,6 +29,14 @@ class DocumentRepositoryImpl(DocumentRepository):
                 stmt = stmt.where(DBDocument.filename.contains(filters.filename))
             if filters.chat_id:
                 stmt = stmt.where(DBDocument.chat_id == filters.chat_id)
+            if filters.from_creation_date:
+                stmt = stmt.where(DBDocument.created_at >= normalize_timestamps_to_utc(filters.from_creation_date))
+            if filters.to_creation_date:
+                stmt = stmt.where(DBDocument.created_at <= normalize_timestamps_to_utc(filters.to_creation_date))
+            if filters.from_update_date:
+                stmt = stmt.where(DBDocument.created_at >= normalize_timestamps_to_utc(filters.from_update_date))
+            if filters.to_update_date:
+                stmt = stmt.where(DBDocument.created_at <= normalize_timestamps_to_utc(filters.to_update_date))
             return stmt
 
         total_stmt = select(func.count()).select_from(DBDocument)

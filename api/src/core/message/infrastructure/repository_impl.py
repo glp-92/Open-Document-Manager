@@ -4,6 +4,7 @@ from core.message.api.dto.requests import MessageFilters
 from core.message.domain.model import Message
 from core.message.domain.repository import MessageRepository
 from core.message.infrastructure.db_model import DBMessage
+from core.shared.infrastructure.timestamps import normalize_timestamps_to_utc
 from sqlalchemy import Column, Result, Select, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -30,6 +31,14 @@ class MessageRepositoryImpl(MessageRepository):
                 stmt = stmt.where(DBMessage.content.contains(filters.content))
             if filters.chat_id:
                 stmt = stmt.where(DBMessage.chat_id == filters.chat_id)
+            if filters.from_creation_date:
+                stmt = stmt.where(DBMessage.created_at >= normalize_timestamps_to_utc(filters.from_creation_date))
+            if filters.to_creation_date:
+                stmt = stmt.where(DBMessage.created_at <= normalize_timestamps_to_utc(filters.to_creation_date))
+            if filters.from_update_date:
+                stmt = stmt.where(DBMessage.created_at >= normalize_timestamps_to_utc(filters.from_update_date))
+            if filters.to_update_date:
+                stmt = stmt.where(DBMessage.created_at <= normalize_timestamps_to_utc(filters.to_update_date))
             return stmt
 
         total_stmt = select(func.count()).select_from(DBMessage)

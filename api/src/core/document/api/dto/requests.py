@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
@@ -11,6 +12,10 @@ class DocumentFilters(BaseModel):
     order: Literal["asc", "desc"] = "desc"
     filename: str | None = None
     chat_id: UUID | None = None
+    from_creation_date: datetime | None = None
+    to_creation_date: datetime | None = None
+    from_update_date: datetime | None = None
+    to_update_date: datetime | None = None
 
 
 class NewDocumentRequest(BaseModel):

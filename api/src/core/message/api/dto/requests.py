@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
@@ -12,6 +13,10 @@ class MessageFilters(BaseModel):
     owner: Literal["human", "ai"] | None = None
     content: str | None = None
     chat_id: UUID | None = None
+    from_creation_date: datetime | None = None
+    to_creation_date: datetime | None = None
+    from_update_date: datetime | None = None
+    to_update_date: datetime | None = None
 
 
 class NewMessageRequest(BaseModel):

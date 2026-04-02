@@ -4,6 +4,7 @@ from core.chat.api.dto.requests import ChatFilters
 from core.chat.domain.model import Chat
 from core.chat.domain.repository import ChatRepository
 from core.chat.infrastructure.db_model import DBChat
+from core.shared.infrastructure.timestamps import normalize_timestamps_to_utc
 from sqlalchemy import Column, Result, Select, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,6 +27,14 @@ class ChatRepositoryImpl(ChatRepository):
                 stmt = stmt.where(DBChat.name.contains(filters.name))
             if filters.workspace_id:
                 stmt = stmt.where(DBChat.workspace_id == filters.workspace_id)
+            if filters.from_creation_date:
+                stmt = stmt.where(DBChat.created_at >= normalize_timestamps_to_utc(filters.from_creation_date))
+            if filters.to_creation_date:
+                stmt = stmt.where(DBChat.created_at <= normalize_timestamps_to_utc(filters.to_creation_date))
+            if filters.from_update_date:
+                stmt = stmt.where(DBChat.created_at >= normalize_timestamps_to_utc(filters.from_update_date))
+            if filters.to_update_date:
+                stmt = stmt.where(DBChat.created_at <= normalize_timestamps_to_utc(filters.to_update_date))
             return stmt
 
         total_stmt = select(func.count()).select_from(DBChat)
