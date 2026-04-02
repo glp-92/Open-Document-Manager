@@ -1,17 +1,17 @@
 services:
-  # api:
-  #   build:
-  #     context: ./api
-  #   restart: on-failure
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
-  #   env_file: .env
-  #   environment:
-  #     DB_HOST: db
-  #     DB_PORT: 3306
-  #   ports:
-  #     - "127.0.0.1:8080:8080"
+  api:
+    build:
+      context: ./api
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DB_HOST: db
+      STORAGE_HOST: storage
+    ports:
+      - "127.0.0.1:8080:8080"
 
   ollama-server:
     image: ollama/ollama:latest
@@ -62,29 +62,24 @@ services:
       timeout: 3s
       retries: 3
 
-  seaweedfs:
+  storage:
     image: chrislusf/seaweedfs:latest
-    container_name: seaweedfs
     ports:
-      - "9000:9000" # S3 API
-      - "9333:9333" # Server Status
-      - "8888:8888" # WebUI
+      - "127.0.0.1:9000:9000" # S3 API
+      - "127.0.0.1:9333:9333" # Server Status
+      - "127.0.0.1:8888:8888" # WebUI
     volumes:
       - ./seaweed-server/filer.toml:/etc/seaweedfs/filer.toml
+      - ./seaweed-server/s3-config.json:/etc/seaweedfs/s3-config.json
       # - ./sw_data:/data
     command: >
       server 
-      -ip=seaweedfs
+      -ip=storage
       -s3 
       -s3.port=9000 
-      -master.port=9333 
-      -volume.port=8080 
-      -filer 
-      -filer.port=8888 
+      -s3.config=/etc/seaweedfs/s3-config.json
+      -filer
       -dir=/data
-    environment:
-      FILE_STORAGE_ACCESS_KEY: "${STORAGE_USR}"
-      FILE_STORAGE_SECRET_KEY: "${STORAGE_PWD}"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/status"]
       interval: 10s

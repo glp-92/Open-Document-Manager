@@ -1,0 +1,7 @@
+.dockerignore 
+Dockerfile
+Readme.md 
+test 
+.venv 
+.ruff_cache 
+.mypy_cache

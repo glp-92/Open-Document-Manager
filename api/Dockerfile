@@ -1,4 +1,8 @@
 FROM python:3.14-slim
+RUN apt update && apt upgrade -y \
+    && apt install -y --no-install-recommends libpq-dev gcc \
+    && apt clean \
+    && rm -rf /var/lib/apt/lists/*
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 COPY . /app
 WORKDIR /app

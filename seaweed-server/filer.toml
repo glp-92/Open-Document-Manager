@@ -7,18 +7,8 @@ dir = "/data/filerdb"
 
 [notification.webhook]
 enabled = true
-endpoint = "http://api:8000/webhooks/storage"
+endpoint = "http://api:8080/api/v1/documents/webhooks"
 event_filter = ["create"]
 
 [s3]
 enabled = true
-port = 9000
-allowEmptyFolder = true
-
-[[s3.config.identities]]
-name = "admin"
-actions = ["Admin", "Read", "Write"]
-
-[[s3.config.identities.credentials]]
-accessKey = "testuser"
-secretKey = "testpwd"
