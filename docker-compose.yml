@@ -62,6 +62,17 @@ services:
       timeout: 3s
       retries: 3
 
+  db-dashboard:
+    restart: unless-stopped
+    image: sosedoff/pgweb
+    ports:
+      - 8081:8081
+    environment:
+      - PGWEB_DATABASE_URL=postgres://${DB_USR}:${DB_PWD}@db:5432/${DB_NAME}?sslmode=disable
+    depends_on:
+      db:
+        condition: service_healthy
+
   storage:
     image: chrislusf/seaweedfs:latest
     ports:
