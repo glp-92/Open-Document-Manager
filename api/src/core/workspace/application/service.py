@@ -6,20 +6,22 @@ from core.workspace.domain.model import Workspace
 from core.workspace.exceptions.workspace import WorkspaceNotFoundError
 from core.workspace.infrastructure.db_model import DBWorkspace
 from core.workspace.infrastructure.repository_impl import WorkspaceRepositoryImpl
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class WorkspaceService:
     def __init__(self, workspace_repository_impl: WorkspaceRepositoryImpl):
         self.workspace_repository_impl = workspace_repository_impl
 
-    async def create_workspace(self, session: Session, new_workspace_request: NewWorkspaceRequest) -> WorkspaceResponse:
+    async def create_workspace(
+        self, session: AsyncSession, new_workspace_request: NewWorkspaceRequest
+    ) -> WorkspaceResponse:
         workspace: Workspace = Workspace(**new_workspace_request.model_dump())
         db_workspace: DBWorkspace = await self.workspace_repository_impl.save(session=session, workspace=workspace)
         return WorkspaceResponse.model_validate(db_workspace, from_attributes=True)
 
     async def find_workspaces_with_filters_pageable(
-        self, session: Session, filters: WorkspaceFilters
+        self, session: AsyncSession, filters: WorkspaceFilters
     ) -> WorkspaceListResponse:
         db_workspaces: list[DBWorkspace] = []
         total: int = 0
@@ -34,7 +36,7 @@ class WorkspaceService:
             total=total,
         )
 
-    async def delete_workspace_by_id(self, session: Session, workspace_id: UUID):
+    async def delete_workspace_by_id(self, session: AsyncSession, workspace_id: UUID):
         deleted_id: UUID | None = await self.workspace_repository_impl.delete_by_id(session=session, id=workspace_id)
         if deleted_id is None:
             raise WorkspaceNotFoundError(workspace_id=workspace_id)
