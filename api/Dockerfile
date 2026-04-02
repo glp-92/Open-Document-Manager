@@ -4,7 +4,8 @@ RUN apt update && apt upgrade -y \
     && apt clean \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
-COPY . /app
 WORKDIR /app
+COPY pyproject.toml uv.lock ./
 RUN uv sync --group api --no-dev --no-cache
+COPY . /app
 CMD ["/app/.venv/bin/fastapi", "run", "src/main.py", "--port", "8080", "--host", "0.0.0.0"]
