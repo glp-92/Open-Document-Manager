@@ -13,6 +13,29 @@ services:
     ports:
       - "127.0.0.1:8080:8080"
 
+  vector-index:
+    build:
+      context: ./leann-indexer
+    restart: on-failure
+    env_file: .env
+    volumes:
+      - ./documents:/documents
+    environment:
+      LEANN_OLLAMA_HOST: "http://ollama-server:11434"
+      LEANN_BACKEND: hnsw
+      DB_HOST: db
+      STORAGE_HOST: storage
+    depends_on:
+      db:
+        condition: service_healthy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["0"]
+              capabilities: [gpu]
+
   ollama-server:
     image: ollama/ollama:0.20.0
     restart: on-failure
@@ -99,21 +122,3 @@ services:
       retries: 5
       start_period: 10s
     restart: on-failure
-
-  vector-index:
-    build:
-      context: ./leann-vector-index
-    restart: on-failure
-    env_file: .env
-    volumes:
-      - ./documents:/documents
-    environment:
-      LEANN_OLLAMA_HOST: "http://ollama-server:11434"
-      LEANN_BACKEND: hnsw
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              device_ids: ["0"]
-              capabilities: [gpu]

@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from config.middlewares import add_middlewares
 from core.core import Core
+from db.events import create_event_channel
 from db.sql_alchemy_unit_of_work import Base, engine
 from fastapi import FastAPI
 
@@ -10,6 +11,7 @@ from fastapi import FastAPI
 async def lifespan(_: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await create_event_channel(conn=conn)
     yield
     await engine.dispose()
 

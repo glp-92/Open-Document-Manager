@@ -12,12 +12,15 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         libgomp1 \
         libstdc++6 \
+        libpq-dev gcc \
     && rm -rf /var/lib/apt/lists/*
 
 RUN python -m pip install --upgrade pip \
     && pip install --prefer-binary "leann==${LEANN_VERSION}" \
     && python -c "import leann; import leann_backend_hnsw; import leann_backend_diskann"
 
-WORKDIR /workspace
+RUN pip install --no-cache-dir loguru psycopg>=3.3 python-dotenv
+COPY src /app/src
+WORKDIR /app/src
 
-ENTRYPOINT  ["sleep", "infinity"]
+ENTRYPOINT  ["python", "main.py"]
