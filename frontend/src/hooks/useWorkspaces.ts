@@ -222,6 +222,25 @@ export function useWorkspaces() {
     [activeChatId, activeWorkspaceId, workspaceDocs],
   );
 
+  const [embeddingStatus, setEmbeddingStatus] = useState<
+    Record<string, "idle" | "computing" | "done">
+  >({});
+
+  const computeEmbeddings = useCallback((workspaceId: string) => {
+    setEmbeddingStatus((prev) => ({ ...prev, [workspaceId]: "computing" }));
+    // Simulate embedding computation
+    setTimeout(() => {
+      setEmbeddingStatus((prev) => ({ ...prev, [workspaceId]: "done" }));
+    }, 4000);
+  }, []);
+
+  const getEmbeddingStatus = useCallback(
+    (workspaceId: string): "idle" | "computing" | "done" => {
+      return embeddingStatus[workspaceId] ?? "idle";
+    },
+    [embeddingStatus],
+  );
+
   const uploadDocument = useCallback(
     (name: string) => {
       const newDoc: Document = {
@@ -264,5 +283,7 @@ export function useWorkspaces() {
     createChat,
     sendMessage,
     uploadDocument,
+    computeEmbeddings,
+    getEmbeddingStatus,
   };
 }
