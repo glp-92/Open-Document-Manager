@@ -1,21 +1,21 @@
-import { FileText } from 'lucide-react';
-import { Message } from '@/types/workspace';
+import { FileText } from "lucide-react";
+import { Message } from "@/types/workspace";
 
 interface Props {
   message: Message;
 }
 
 export function ChatMessage({ message }: Props) {
-  const isUser = message.role === 'user';
+  const isUser = message.role === "user";
 
   return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
-      <div className={`max-w-[85%] ${isUser ? '' : ''}`}>
+    <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-4`}>
+      <div className={`max-w-[85%] ${isUser ? "" : ""}`}>
         <div
           className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
             isUser
-              ? 'bg-bubble-user text-bubble-user-foreground rounded-br-md'
-              : 'bg-bubble-assistant text-bubble-assistant-foreground rounded-bl-md'
+              ? "bg-bubble-user text-bubble-user-foreground rounded-br-md"
+              : "bg-bubble-assistant text-bubble-assistant-foreground rounded-bl-md"
           }`}
         >
           <MessageContent content={message.content} />
@@ -42,7 +42,7 @@ export function ChatMessage({ message }: Props) {
 
 function MessageContent({ content }: { content: string }) {
   // Simple markdown-like rendering
-  const lines = content.split('\n');
+  const lines = content.split("\n");
   const elements: React.ReactNode[] = [];
   let inTable = false;
   let tableRows: string[][] = [];
@@ -55,7 +55,10 @@ function MessageContent({ content }: { content: string }) {
             <thead>
               <tr>
                 {tableRows[0].map((cell, i) => (
-                  <th key={i} className="text-left px-3 py-1.5 border-b border-border font-medium text-muted-foreground">
+                  <th
+                    key={i}
+                    className="text-left px-3 py-1.5 border-b border-border font-medium text-muted-foreground"
+                  >
                     {cell.trim()}
                   </th>
                 ))}
@@ -65,7 +68,10 @@ function MessageContent({ content }: { content: string }) {
               {tableRows.slice(2).map((row, ri) => (
                 <tr key={ri}>
                   {row.map((cell, ci) => (
-                    <td key={ci} className="px-3 py-1.5 border-b border-border/50">
+                    <td
+                      key={ci}
+                      className="px-3 py-1.5 border-b border-border/50"
+                    >
                       {cell.trim()}
                     </td>
                   ))}
@@ -73,7 +79,7 @@ function MessageContent({ content }: { content: string }) {
               ))}
             </tbody>
           </table>
-        </div>
+        </div>,
       );
       tableRows = [];
     }
@@ -81,22 +87,28 @@ function MessageContent({ content }: { content: string }) {
   };
 
   lines.forEach((line, i) => {
-    if (line.startsWith('|')) {
+    if (line.startsWith("|")) {
       inTable = true;
-      tableRows.push(line.split('|').filter(Boolean));
+      tableRows.push(line.split("|").filter(Boolean));
       return;
     }
     if (inTable) flushTable();
 
-    if (line.trim() === '') {
+    if (line.trim() === "") {
       elements.push(<div key={i} className="h-2" />);
     } else {
       elements.push(
-        <p key={i} dangerouslySetInnerHTML={{
-          __html: line
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/`(.*?)`/g, '<code class="px-1 py-0.5 rounded bg-border/60 text-xs font-mono">$1</code>')
-        }} />
+        <p
+          key={i}
+          dangerouslySetInnerHTML={{
+            __html: line
+              .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+              .replace(
+                /`(.*?)`/g,
+                '<code class="px-1 py-0.5 rounded bg-border/60 text-xs font-mono">$1</code>',
+              ),
+          }}
+        />,
       );
     }
   });

@@ -1,41 +1,79 @@
-import { WorkspaceSidebar } from '@/components/WorkspaceSidebar';
-import { ChatArea } from '@/components/ChatArea';
-import { DocumentsPanel } from '@/components/DocumentsPanel';
-import { useWorkspaces } from '@/hooks/useWorkspaces';
-import { useMemo } from 'react';
+import { WorkspaceSidebar } from "@/components/WorkspaceSidebar";
+import { ChatArea } from "@/components/ChatArea";
+import { useWorkspaces } from "@/hooks/useWorkspaces";
+import { useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 const Index = () => {
-  const { workspaces, activeWorkspace, activeId, setActiveId, createWorkspace, sendMessage, uploadDocument } = useWorkspaces();
+  const ws = useWorkspaces();
+  const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const lastCitedDocs = useMemo(() => {
-    const msgs = activeWorkspace.messages;
-    for (let i = msgs.length - 1; i >= 0; i--) {
-      if (msgs[i].citations?.length) {
-        return [...new Set(msgs[i].citations!.map(c => c.documentName))];
-      }
-    }
-    return [];
-  }, [activeWorkspace.messages]);
+  const sidebarProps = {
+    workspaces: ws.workspaces,
+    activeWorkspaceId: ws.activeWorkspaceId,
+    activeChatId: ws.activeChatId,
+    workspaceChats: ws.workspaceChats,
+    workspaceDocs: ws.workspaceDocs,
+    allChats: ws.workspaceChats,
+    allDocs: ws.workspaceDocs,
+    onSelectWorkspace: isMobile
+      ? (id: string) => {
+          ws.selectWorkspace(id);
+        }
+      : ws.selectWorkspace,
+    onSelectChat: isMobile
+      ? (id: string) => {
+          ws.selectChat(id);
+          setSidebarOpen(false);
+        }
+      : ws.selectChat,
+    onCreate: isMobile
+      ? () => {
+          ws.createWorkspace();
+        }
+      : ws.createWorkspace,
+    onCreateChat: isMobile
+      ? () => {
+          ws.createChat();
+          setSidebarOpen(false);
+        }
+      : () => ws.createChat(),
+    onUpload: ws.uploadDocument,
+  };
+
+  const chatAreaProps = {
+    messages: ws.chatMessages,
+    onSend: ws.sendMessage,
+    workspaceName: ws.activeChat?.title ?? ws.activeWorkspace.name,
+    hasDocuments: ws.workspaceDocs.length > 0,
+    ...(isMobile
+      ? { isMobile: true, onOpenSidebar: () => setSidebarOpen(true) }
+      : {}),
+  };
+
+  if (isMobile) {
+    return (
+      <div className="flex flex-col h-screen overflow-hidden">
+        <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+          <SheetContent side="left" className="p-0 w-[280px]">
+            <VisuallyHidden>
+              <SheetTitle>Workspaces</SheetTitle>
+            </VisuallyHidden>
+            <WorkspaceSidebar {...sidebarProps} />
+          </SheetContent>
+        </Sheet>
+        <ChatArea {...chatAreaProps} />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <WorkspaceSidebar
-        workspaces={workspaces}
-        activeId={activeId}
-        onSelect={setActiveId}
-        onCreate={createWorkspace}
-      />
-      <ChatArea
-        messages={activeWorkspace.messages}
-        onSend={sendMessage}
-        workspaceName={activeWorkspace.name}
-        hasDocuments={activeWorkspace.documents.length > 0}
-      />
-      <DocumentsPanel
-        documents={activeWorkspace.documents}
-        onUpload={uploadDocument}
-        lastCitedDocs={lastCitedDocs}
-      />
+      <WorkspaceSidebar {...sidebarProps} />
+      <ChatArea {...chatAreaProps} />
     </div>
   );
 };
