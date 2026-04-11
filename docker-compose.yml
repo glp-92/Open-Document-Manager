@@ -49,6 +49,8 @@ services:
     volumes:
       - ./ollama-data:/root/.ollama
       - ./ollama-server/entrypoint.sh:/entrypoint.sh
+      - ./ollama-server/Modelfile-embeddings-cpu:/models/Modelfile-embeddings-cpu
+      - ./ollama-server/Modelfile-llm-gpu:/models/Modelfile-llm-gpu
     entrypoint: ["/bin/bash", "/entrypoint.sh"]
     healthcheck:
       test:
