@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from uuid import uuid4
 
-from core.chat.infrastructure.db_model import DBChat
 from core.document.domain.model import Document, StorageStatus
+from core.workspace.infrastructure.db_model import DBWorkspace
 from db.sql_alchemy_unit_of_work import Base
 from sqlalchemy import INTEGER, Column, DateTime, Enum, ForeignKey, String, func
 from sqlalchemy.dialects.postgresql import UUID
@@ -21,8 +21,8 @@ class DBDocument(Base):
     storage_status = Column(Enum(StorageStatus, native_enum=False), nullable=False, default=StorageStatus.PENDING)
     created_at = Column(DateTime(timezone=True), nullable=True, server_default=func.now())
     updated_at = Column(DateTime(timezone=True), nullable=True, server_default=func.now(), server_onupdate=func.now())
-    chat_id = Column(UUID, ForeignKey(DBChat.id, ondelete="CASCADE"), nullable=False)
-    chat = relationship("DBChat", back_populates="documents")
+    workspace_id = Column(UUID, ForeignKey(DBWorkspace.id, ondelete="CASCADE"), nullable=False)
+    workspace = relationship("DBWorkspace", back_populates="documents")
 
     @staticmethod
     def to_domain_object(db_document: DBDocument) -> Document:

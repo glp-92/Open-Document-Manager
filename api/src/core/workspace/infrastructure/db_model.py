@@ -22,6 +22,7 @@ class DBWorkspace(Base):
         server_onupdate=func.now(),
     )
     chats = relationship("DBChat", back_populates="workspace", passive_deletes=True)
+    documents = relationship("DBDocument", back_populates="workspace", passive_deletes=True)
     runs = relationship("DBRun", back_populates="workspace", passive_deletes=True)
 
     @staticmethod

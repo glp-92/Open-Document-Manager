@@ -1,7 +1,7 @@
 import asyncio
 
 from config.logger import logger
-from infrastructure.postgres_channels_listeners import pg_channel_listener
+from infrastructure.events import pg_channel_listener
 
 if __name__ == "__main__":
     try:

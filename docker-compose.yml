@@ -42,10 +42,11 @@ services:
     ports:
       - "127.0.0.1:11434:11434"
     environment:
-      - MODEL_NAME="${MODEL_NAME}"
       - OLLAMA_NUM_PARALLEL=1
       - OLLAMA_CONTEXT_LENGTH=32768
       - OLLAMA_KEEP_ALIVE=1h
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL}
+      - LLM_MODEL=${LLM_MODEL}
     volumes:
       - ./ollama-data:/root/.ollama
       - ./ollama-server/entrypoint.sh:/entrypoint.sh

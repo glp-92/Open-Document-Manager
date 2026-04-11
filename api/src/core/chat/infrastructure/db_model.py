@@ -29,7 +29,6 @@ class DBChat(Base):
     workspace_id = Column(UUID, ForeignKey(DBWorkspace.id, ondelete="CASCADE"), nullable=False)
     workspace = relationship("DBWorkspace", back_populates="chats")
     messages = relationship("DBMessage", back_populates="chat", passive_deletes=True)
-    documents = relationship("DBDocument", back_populates="chat", passive_deletes=True)
 
     @staticmethod
     def to_domain_object(db_chat: DBChat) -> Chat:
