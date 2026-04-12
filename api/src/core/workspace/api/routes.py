@@ -2,7 +2,7 @@ import traceback
 from typing import Annotated
 from uuid import UUID
 
-from core.workspace.api.dto.requests import NewWorkspaceRequest, WorkspaceFilters
+from core.workspace.api.dto.requests import NewWorkspaceRequest, UpdateWorkspaceRequest, WorkspaceFilters
 from core.workspace.api.dto.responses import WorkspaceListResponse, WorkspaceResponse
 from core.workspace.application.service import WorkspaceService
 from core.workspace.exceptions.workspace import WorkspaceNotFoundError
@@ -40,6 +40,20 @@ class WorkspaceRouter:
             try:
                 return await self.workspace_service.create_workspace(
                     session=sql_session, new_workspace_request=new_workspace_request
+                )
+            except (ValidationError, Exception):
+                traceback.print_exc()
+                raise HTTPException(status_code=400, detail="bad request")
+
+        @self.router.patch("/{workspace_id}", status_code=200, response_model=WorkspaceResponse)
+        async def edit_workspace(
+            workspace_id: UUID,
+            update_workspace_request: UpdateWorkspaceRequest,
+            sql_session: AsyncSession = Depends(get_db),
+        ):
+            try:
+                return await self.workspace_service.edit_workspace(
+                    session=sql_session, workspace_id=workspace_id, update_workspace_request=update_workspace_request
                 )
             except (ValidationError, Exception):
                 traceback.print_exc()

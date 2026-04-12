@@ -1,57 +1,88 @@
-export interface Document {
-  id: string;
-  name: string;
-  status: "processing" | "ready";
-  pages?: number;
-  workspaceId: string;
-  uploadedAt: Date;
-}
-
-export interface Citation {
-  page: number;
-  documentName: string;
-}
-
-export interface Message {
-  id: string;
-  chatId: string;
-  role: "user" | "assistant";
-  content: string;
-  citations?: Citation[];
-  timestamp: Date;
-}
-
-export interface Chat {
-  id: string;
-  workspaceId: string;
-  title: string;
-  createdAt: Date;
-}
+// ── Response models (matching OpenAPI spec) ─────────────────
 
 export interface Workspace {
   id: string;
   name: string;
-  createdAt: Date;
+  created_at: string;
+  updated_at: string;
 }
 
-// API filter types
+export interface Chat {
+  id: string;
+  workspace_id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Message {
+  id: string;
+  chat_id: string;
+  owner: "human" | "ai";
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Document {
+  id: string;
+  worskpace_id: string;
+  filename: string;
+  url?: string | null;
+  size?: number | null;
+  mime?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Run {
+  id: string;
+  workspace_id: string;
+  status: "pending" | "completed" | "error" | "deleted";
+  created_at: string;
+  updated_at?: string | null;
+  completed_at?: string | null;
+}
+
+export interface UploadDocumentResponse {
+  id: string;
+  worskpace_id: string;
+  filename: string;
+  presigned_url: string;
+  created_at: string;
+}
+
+// ── List wrappers ───────────────────────────────────────────
+
+export interface ListResponse<T> {
+  total: number;
+  items: T[];
+}
+
+// ── Filter types ────────────────────────────────────────────
+
 export interface PaginationParams {
-  page?: number;
   limit?: number;
+  offset?: number;
 }
 
 export interface WorkspaceFilters extends PaginationParams {
-  search?: string;
+  name?: string;
 }
 
 export interface ChatFilters extends PaginationParams {
-  workspaceId: string;
+  workspace_id?: string;
 }
 
 export interface MessageFilters extends PaginationParams {
-  chatId: string;
+  chat_id?: string;
 }
 
-export interface FileFilters extends PaginationParams {
-  workspaceId: string;
+export interface DocumentFilters extends PaginationParams {
+  workspace_id?: string;
+}
+
+export interface RunFilters extends PaginationParams {
+  workspace_id?: string;
+  status?: Run["status"];
 }

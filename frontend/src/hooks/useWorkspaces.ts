@@ -1,269 +1,238 @@
-import { useState, useCallback } from "react";
-import { Workspace, Chat, Message, Document } from "@/types/workspace";
-
-const DEMO_DOCS: Document[] = [
-  {
-    id: "d1",
-    workspaceId: "1",
-    name: "Market Analysis 2024.pdf",
-    status: "ready",
-    pages: 42,
-    uploadedAt: new Date("2024-03-01"),
-  },
-  {
-    id: "d2",
-    workspaceId: "1",
-    name: "Competitor Report.pdf",
-    status: "ready",
-    pages: 18,
-    uploadedAt: new Date("2024-03-02"),
-  },
-  {
-    id: "d3",
-    workspaceId: "1",
-    name: "User Survey Results.pdf",
-    status: "processing",
-    uploadedAt: new Date("2024-03-10"),
-  },
-  {
-    id: "d4",
-    workspaceId: "2",
-    name: "API Documentation v3.pdf",
-    status: "ready",
-    pages: 156,
-    uploadedAt: new Date("2024-03-05"),
-  },
-  {
-    id: "d5",
-    workspaceId: "2",
-    name: "System Architecture.pdf",
-    status: "ready",
-    pages: 34,
-    uploadedAt: new Date("2024-03-06"),
-  },
-];
-
-const DEMO_CHATS: Chat[] = [
-  {
-    id: "c1",
-    workspaceId: "1",
-    title: "Market insights",
-    createdAt: new Date("2024-03-05"),
-  },
-  {
-    id: "c2",
-    workspaceId: "1",
-    title: "Pricing comparison",
-    createdAt: new Date("2024-03-06"),
-  },
-  {
-    id: "c3",
-    workspaceId: "2",
-    title: "API endpoints review",
-    createdAt: new Date("2024-03-07"),
-  },
-];
-
-const DEMO_MESSAGES: Message[] = [
-  {
-    id: "m1",
-    chatId: "c1",
-    role: "user",
-    content: "What are the key findings from the market analysis?",
-    timestamp: new Date("2024-03-05T10:00:00"),
-  },
-  {
-    id: "m2",
-    chatId: "c1",
-    role: "assistant",
-    timestamp: new Date("2024-03-05T10:00:05"),
-    content:
-      "Based on the Market Analysis 2024, here are the key findings:\n\n1. **Market size** is projected to reach $4.2B by 2025, growing at 12% CAGR.\n2. **Customer segments** are shifting toward enterprise adoption.\n3. The **competitive landscape** shows consolidation among top 5 players.",
-    citations: [
-      { page: 12, documentName: "Market Analysis 2024.pdf" },
-      { page: 28, documentName: "Market Analysis 2024.pdf" },
-    ],
-  },
-  {
-    id: "m3",
-    chatId: "c2",
-    role: "user",
-    content: "How does our competitor pricing compare?",
-    timestamp: new Date("2024-03-06T10:00:00"),
-  },
-  {
-    id: "m4",
-    chatId: "c2",
-    role: "assistant",
-    timestamp: new Date("2024-03-06T10:00:05"),
-    content:
-      "According to the Competitor Report, pricing varies significantly:\n\n| Competitor | Basic | Enterprise |\n|-----------|-------|------------|\n| Acme Corp | $29/mo | $199/mo |\n| Beta Inc | $39/mo | $299/mo |",
-    citations: [{ page: 5, documentName: "Competitor Report.pdf" }],
-  },
-];
-
-const DEMO_WORKSPACES: Workspace[] = [
-  { id: "1", name: "Product Research", createdAt: new Date("2024-03-01") },
-  { id: "2", name: "Technical Specs", createdAt: new Date("2024-03-05") },
-  { id: "3", name: "Legal Review", createdAt: new Date("2024-03-10") },
-];
+import { useState, useCallback, useEffect } from "react";
+import {
+  Workspace,
+  Chat,
+  Message,
+  Document as DocType,
+  Run,
+} from "@/types/workspace";
+import * as api from "@/api/endpoints";
 
 export function useWorkspaces() {
-  const [workspaces, setWorkspaces] = useState<Workspace[]>(DEMO_WORKSPACES);
-  const [chats, setChats] = useState<Chat[]>(DEMO_CHATS);
-  const [messages, setMessages] = useState<Message[]>(DEMO_MESSAGES);
-  const [documents, setDocuments] = useState<Document[]>(DEMO_DOCS);
-
-  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string>("1");
-  const [activeChatId, setActiveChatId] = useState<string | null>("c1");
-
-  const activeWorkspace =
-    workspaces.find((w) => w.id === activeWorkspaceId) ?? workspaces[0];
-  const workspaceChats = chats.filter(
-    (c) => c.workspaceId === activeWorkspaceId,
-  );
-  const workspaceDocs = documents.filter(
-    (d) => d.workspaceId === activeWorkspaceId,
-  );
-  const activeChat = activeChatId
-    ? chats.find((c) => c.id === activeChatId)
-    : null;
-  const chatMessages = activeChatId
-    ? messages.filter((m) => m.chatId === activeChatId)
-    : [];
-
-  const selectWorkspace = useCallback(
-    (id: string) => {
-      setActiveWorkspaceId(id);
-      // Auto-select first chat in workspace
-      const firstChat = chats.find((c) => c.workspaceId === id);
-      setActiveChatId(firstChat?.id ?? null);
-    },
-    [chats],
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [documents, setDocuments] = useState<DocType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingWorkspaceId, setEditingWorkspaceId] = useState<string | null>(
+    null,
   );
 
-  const selectChat = useCallback((chatId: string) => {
-    setActiveChatId(chatId);
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(
+    null,
+  );
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
+
+  // Fetch workspaces on mount
+  useEffect(() => {
+    api
+      .getWorkspaces()
+      .then((res) => {
+        const ws = res?.workspaces ?? [];
+        setWorkspaces(ws);
+        if (ws.length > 0) setActiveWorkspaceId(ws[0].id);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, []);
 
-  const createWorkspace = useCallback(() => {
-    const newWs: Workspace = {
-      id: crypto.randomUUID(),
-      name: `Workspace ${workspaces.length + 1}`,
-      createdAt: new Date(),
-    };
-    setWorkspaces((prev) => [newWs, ...prev]);
-    setActiveWorkspaceId(newWs.id);
-    setActiveChatId(null);
+  // Fetch chats when active workspace changes
+  useEffect(() => {
+    if (!activeWorkspaceId) {
+      setChats([]);
+      setDocuments([]);
+      return;
+    }
+    api
+      .getChats({ workspace_id: activeWorkspaceId })
+      .then((res) => {
+        const c = res?.chats ?? [];
+        setChats(c);
+        setActiveChatId(c.length > 0 ? c[0].id : null);
+      })
+      .catch(console.error);
+    api
+      .getDocuments({ workspace_id: activeWorkspaceId })
+      .then((res) => {
+        const c = res?.documents ?? [];
+        setDocuments(c);
+      })
+      .catch(console.error);
+  }, [activeWorkspaceId]);
+
+  // Fetch messages when active chat changes
+  useEffect(() => {
+    if (!activeChatId) {
+      setMessages([]);
+      return;
+    }
+    api
+      .getMessages({ chat_id: activeChatId })
+      .then((res) => setMessages(res?.messages ?? []))
+      .catch(console.error);
+  }, [activeChatId]);
+
+  const activeWorkspace =
+    workspaces.find((w) => w.id === activeWorkspaceId) ?? null;
+  const workspaceChats = chats;
+  const workspaceDocs = documents;
+  const activeChat = activeChatId
+    ? (chats.find((c) => c.id === activeChatId) ?? null)
+    : null;
+  const chatMessages = messages;
+
+  const selectWorkspace = useCallback(
+    (id: string) => setActiveWorkspaceId(id),
+    [],
+  );
+  const selectChat = useCallback((id: string) => setActiveChatId(id), []);
+
+  const createWorkspace = useCallback(async () => {
+    try {
+      const ws = await api.createWorkspace(
+        `Workspace ${workspaces.length + 1}`,
+      );
+      setWorkspaces((prev) => [ws, ...prev]);
+      setActiveWorkspaceId(ws.id);
+      setActiveChatId(null);
+    } catch (e) {
+      console.error(e);
+    }
   }, [workspaces.length]);
 
+  const editWorkspace = useCallback(async (id: string, newName: string) => {
+    try {
+      const updatedWs = await api.editWorkspace(id, newName);
+      setWorkspaces((prev) =>
+        prev.map((ws) => (ws.id === id ? updatedWs : ws)),
+      );
+      setActiveWorkspaceId(updatedWs.id);
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
   const createChat = useCallback(
-    (title?: string) => {
-      const newChat: Chat = {
-        id: crypto.randomUUID(),
-        workspaceId: activeWorkspaceId,
-        title: title || `Chat ${workspaceChats.length + 1}`,
-        createdAt: new Date(),
-      };
-      setChats((prev) => [...prev, newChat]);
-      setActiveChatId(newChat.id);
-      return newChat;
+    async (name?: string) => {
+      if (!activeWorkspaceId) return;
+      try {
+        const chat = await api.createChat(
+          activeWorkspaceId,
+          name || `Chat ${chats.length + 1}`,
+        );
+        setChats((prev) => [...prev, chat]);
+        setActiveChatId(chat.id);
+        return chat;
+      } catch (e) {
+        console.error(e);
+      }
     },
-    [activeWorkspaceId, workspaceChats.length],
+    [activeWorkspaceId, chats.length],
   );
+
+  const deleteChat = useCallback(async (chatId: string) => {
+    try {
+      await api.deleteChat(chatId);
+      setChats((prev) => prev.filter((c) => c.id !== chatId));
+      setActiveChatId((currentActive) =>
+        currentActive === chatId ? null : currentActive,
+      );
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
 
   const sendMessage = useCallback(
-    (content: string) => {
+    async (content: string) => {
       let chatId = activeChatId;
 
-      // Auto-create chat if none selected
-      if (!chatId) {
-        const newChat: Chat = {
-          id: crypto.randomUUID(),
-          workspaceId: activeWorkspaceId,
-          title: content.slice(0, 40) + (content.length > 40 ? "…" : ""),
-          createdAt: new Date(),
-        };
-        setChats((prev) => [...prev, newChat]);
-        chatId = newChat.id;
-        setActiveChatId(chatId);
+      // Auto-create chat if none active
+      if (!chatId && activeWorkspaceId) {
+        try {
+          const newChat = await api.createChat(
+            activeWorkspaceId,
+            content.slice(0, 40) + (content.length > 40 ? "…" : ""),
+          );
+          setChats((prev) => [...prev, newChat]);
+          chatId = newChat.id;
+          setActiveChatId(chatId);
+        } catch (e) {
+          console.error(e);
+          return;
+        }
       }
+      if (!chatId) return;
 
-      const userMsg: Message = {
+      // Optimistic user message
+      const tempMsg: Message = {
         id: crypto.randomUUID(),
-        chatId,
-        role: "user",
+        chat_id: chatId,
+        owner: "human",
         content,
-        timestamp: new Date(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       };
-      setMessages((prev) => [...prev, userMsg]);
+      setMessages((prev) => [...prev, tempMsg]);
 
-      // Simulate assistant response
-      const capturedChatId = chatId;
-      setTimeout(() => {
-        const assistantMsg: Message = {
-          id: crypto.randomUUID(),
-          chatId: capturedChatId,
-          role: "assistant",
-          content:
-            "I've analyzed your documents and found relevant information. This is a demo response — in a real application, this would contain insights extracted from your uploaded documents.",
-          citations: workspaceDocs
-            .filter((d) => d.status === "ready")
-            .slice(0, 1)
-            .map((d) => ({
-              page: Math.floor(Math.random() * 20) + 1,
-              documentName: d.name,
-            })),
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, assistantMsg]);
-      }, 1500);
+      try {
+        const response = await api.createMessage(chatId, content, "human");
+        setMessages((prev) => [
+          ...prev.filter((m) => m.id !== tempMsg.id),
+          response,
+        ]);
+        // Refetch to include any AI reply
+        const fresh = await api.getMessages({ chat_id: chatId });
+        setMessages(fresh?.messages ?? []);
+      } catch (e) {
+        console.error(e);
+      }
     },
-    [activeChatId, activeWorkspaceId, workspaceDocs],
+    [activeChatId, activeWorkspaceId],
   );
 
-  const [embeddingStatus, setEmbeddingStatus] = useState<
+  // ── Runs (replaces embeddings) ────────────────────────────
+  const [runStatus, setRunStatus] = useState<
     Record<string, "idle" | "computing" | "done">
   >({});
 
-  const computeEmbeddings = useCallback((workspaceId: string) => {
-    setEmbeddingStatus((prev) => ({ ...prev, [workspaceId]: "computing" }));
-    // Simulate embedding computation
-    setTimeout(() => {
-      setEmbeddingStatus((prev) => ({ ...prev, [workspaceId]: "done" }));
-    }, 4000);
+  const computeEmbeddings = useCallback(async (workspaceId: string) => {
+    setRunStatus((prev) => ({ ...prev, [workspaceId]: "computing" }));
+    try {
+      await api.createRun(workspaceId);
+      setRunStatus((prev) => ({ ...prev, [workspaceId]: "done" }));
+    } catch (e) {
+      console.error(e);
+      setRunStatus((prev) => ({ ...prev, [workspaceId]: "idle" }));
+    }
   }, []);
 
   const getEmbeddingStatus = useCallback(
     (workspaceId: string): "idle" | "computing" | "done" => {
-      return embeddingStatus[workspaceId] ?? "idle";
+      return runStatus[workspaceId] ?? "idle";
     },
-    [embeddingStatus],
+    [runStatus],
   );
 
+  // ── Document upload (2-step: create → presigned PUT) ──────
   const uploadDocument = useCallback(
-    (name: string) => {
-      const newDoc: Document = {
-        id: crypto.randomUUID(),
-        workspaceId: activeWorkspaceId,
-        name,
-        status: "processing",
-        uploadedAt: new Date(),
-      };
-      setDocuments((prev) => [...prev, newDoc]);
-      setTimeout(() => {
-        setDocuments((prev) =>
-          prev.map((d) =>
-            d.id === newDoc.id
-              ? {
-                  ...d,
-                  status: "ready" as const,
-                  pages: Math.floor(Math.random() * 50) + 5,
-                }
-              : d,
-          ),
-        );
-      }, 3000);
+    async (file: File) => {
+      if (!activeWorkspaceId) return;
+      try {
+        const res = await api.createDocument(activeWorkspaceId, file.name);
+        // Upload to presigned URL
+        await fetch(res.presigned_url, {
+          method: "PUT",
+          body: file,
+          headers: { "Content-Type": file.type || "application/octet-stream" },
+        });
+        // Refetch documents for the chat
+        const docs = await api.getDocuments({
+          workspace_id: activeWorkspaceId,
+        });
+        setDocuments(docs?.documents ?? []);
+      } catch (e) {
+        console.error(e);
+      }
     },
     [activeWorkspaceId],
   );
@@ -277,13 +246,18 @@ export function useWorkspaces() {
     workspaceChats,
     workspaceDocs,
     chatMessages,
+    loading,
+    editingWorkspaceId,
     selectWorkspace,
     selectChat,
     createWorkspace,
+    editWorkspace,
     createChat,
+    deleteChat,
     sendMessage,
     uploadDocument,
     computeEmbeddings,
     getEmbeddingStatus,
+    setEditingWorkspaceId,
   };
 }

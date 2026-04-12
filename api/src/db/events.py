@@ -66,6 +66,6 @@ async def create_event_channel(conn: AsyncConnection):
     await conn.execute(text(NEW_INGESTION_RUN_FN))
     await conn.execute(text(NEW_INGESTION_RUN_TRIGGER))
     logger.info("event channel ready for new run notify")
-    await conn.execute(text(FINISHED_INGESTION_RUN_FN))
-    await conn.execute(text(FINISHED_INGESTION_RUN_TRIGGER))
+    # await conn.execute(text(FINISHED_INGESTION_RUN_FN))
+    # await conn.execute(text(FINISHED_INGESTION_RUN_TRIGGER))
     logger.info("event channel ready run finish notify")

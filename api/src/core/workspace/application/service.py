@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from core.workspace.api.dto.requests import NewWorkspaceRequest, WorkspaceFilters
+from core.workspace.api.dto.requests import NewWorkspaceRequest, UpdateWorkspaceRequest, WorkspaceFilters
 from core.workspace.api.dto.responses import WorkspaceListResponse, WorkspaceResponse
 from core.workspace.domain.model import Workspace
 from core.workspace.exceptions.workspace import WorkspaceNotFoundError
@@ -35,6 +35,16 @@ class WorkspaceService:
             ],
             total=total,
         )
+
+    async def edit_workspace(
+        self, session: AsyncSession, workspace_id: UUID, update_workspace_request: UpdateWorkspaceRequest
+    ) -> WorkspaceResponse:
+        db_workspace: DBWorkspace | None = await self.workspace_repository_impl.update_by_id(
+            session=session, id=workspace_id, params=update_workspace_request
+        )
+        if db_workspace is None:
+            raise WorkspaceNotFoundError(workspace_id=workspace_id)
+        return WorkspaceResponse.model_validate(db_workspace, from_attributes=True)
 
     async def delete_workspace_by_id(self, session: AsyncSession, workspace_id: UUID):
         deleted_id: UUID | None = await self.workspace_repository_impl.delete_by_id(session=session, id=workspace_id)

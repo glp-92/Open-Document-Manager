@@ -12,7 +12,7 @@ class DocumentFilters(BaseModel):
     order: Literal["asc", "desc"] = "desc"
     filename: str | None = None
     mime: str | None = None
-    chat_id: UUID | None = None
+    workspace_id: UUID | None = None
     from_creation_date: datetime | None = None
     to_creation_date: datetime | None = None
     from_update_date: datetime | None = None
@@ -20,7 +20,7 @@ class DocumentFilters(BaseModel):
 
 
 class NewDocumentRequest(BaseModel):
-    chat_id: UUID
+    workspace_id: UUID
     filename: str
 
 

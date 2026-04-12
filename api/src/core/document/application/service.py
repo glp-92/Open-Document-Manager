@@ -39,7 +39,7 @@ class DocumentService:
         )
         return UploadDocumentOptimisticResponse(
             id=db_document.id,
-            chat_id=db_document.chat_id,
+            workspace_id=db_document.workspace_id,
             filename=db_document.filename,
             presigned_url=presigned_url,
             created_at=db_document.created_at,

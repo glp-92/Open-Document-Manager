@@ -1,11 +1,11 @@
 from uuid import UUID
 
 from core.shared.infrastructure.timestamps import normalize_timestamps_to_utc
-from core.workspace.api.dto.requests import WorkspaceFilters
+from core.workspace.api.dto.requests import UpdateWorkspaceRequest, WorkspaceFilters
 from core.workspace.domain.model import Workspace
 from core.workspace.domain.repository import WorkspaceRepository
 from core.workspace.infrastructure.db_model import DBWorkspace
-from sqlalchemy import Column, Result, Select, delete, func, select
+from sqlalchemy import Column, Result, Select, delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -51,6 +51,17 @@ class WorkspaceRepositoryImpl(WorkspaceRepository):
         result = await session.execute(stmt)
         db_workspaces: list[DBWorkspace] = result.scalars().all()
         return db_workspaces, total
+
+    @staticmethod
+    async def update_by_id(session: AsyncSession, id: UUID, params: UpdateWorkspaceRequest) -> DBWorkspace:
+        stmt = (
+            update(DBWorkspace)
+            .where(DBWorkspace.id == id)
+            .values(**params.model_dump(exclude_unset=True))
+            .returning(DBWorkspace)
+        )
+        result: Result = await session.execute(stmt)
+        return result.scalar_one_or_none()
 
     @staticmethod
     async def delete_by_id(session: AsyncSession, id: UUID) -> UUID | None:

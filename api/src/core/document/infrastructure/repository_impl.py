@@ -29,8 +29,8 @@ class DocumentRepositoryImpl(DocumentRepository):
                 stmt = stmt.where(DBDocument.filename.contains(filters.filename))
             if filters.mime:
                 stmt = stmt.where(DBDocument.mime == filters.mime)
-            if filters.chat_id:
-                stmt = stmt.where(DBDocument.chat_id == filters.chat_id)
+            if filters.workspace_id:
+                stmt = stmt.where(DBDocument.workspace_id == filters.workspace_id)
             if filters.from_creation_date:
                 stmt = stmt.where(DBDocument.created_at >= normalize_timestamps_to_utc(filters.from_creation_date))
             if filters.to_creation_date:

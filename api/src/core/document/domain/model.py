@@ -14,7 +14,7 @@ class StorageStatus(StrEnum):
 
 class Document(BaseModel):
     id: UUID | None = None
-    chat_id: UUID
+    workspace_id: UUID
     filename: str
     storage_status: StorageStatus = StorageStatus.PENDING
     url: str | None = None

@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useWorkspaces } from "@/hooks/useWorkspaces";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Sheet, SheetContent, SheetTitle } from "@/components/sheet";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import {
   Message,
@@ -9,6 +9,7 @@ import {
   Document as DocType,
   Workspace,
 } from "@/types/workspace";
+
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Plus,
@@ -25,6 +26,8 @@ import {
   Zap,
   Send,
   Menu,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 
 // ── Page ────────────────────────────────────────────────────
@@ -66,14 +69,20 @@ export default function Index() {
       ) : (
         sidebar
       )}
-      <ChatArea
-        messages={ws.chatMessages}
-        onSend={ws.sendMessage}
-        title={ws.activeChat?.title ?? ws.activeWorkspace.name}
-        hasDocuments={ws.workspaceDocs.length > 0}
-        isMobile={isMobile}
-        onOpenSidebar={() => setSidebarOpen(true)}
-      />
+      {ws.loading ? (
+        <div className="flex-1 flex items-center justify-center bg-background">
+          <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
+        </div>
+      ) : (
+        <ChatArea
+          messages={ws.chatMessages}
+          onSend={ws.sendMessage}
+          title={ws.activeChat?.name ?? ws.activeWorkspace?.name ?? "DocAssist"}
+          hasDocuments={ws.workspaceDocs.length > 0}
+          isMobile={isMobile}
+          onOpenSidebar={() => setSidebarOpen(true)}
+        />
+      )}
     </div>
   );
 }
@@ -93,7 +102,7 @@ function Sidebar(
           <Layers className="w-4 h-4 text-accent-foreground" />
         </div>
         <span className="font-semibold text-sm text-foreground tracking-tight">
-          DocAssist
+          Open DOC Manager
         </span>
       </div>
 
@@ -125,8 +134,11 @@ function Sidebar(
             }
             embeddingStatus={ws.getEmbeddingStatus(w.id)}
             onSelect={() => ws.selectWorkspace(w.id)}
+            onWorkspaceRename={ws.editWorkspace}
+            onWorkspaceRenameFinished={() => ws.setEditingWorkspaceId(null)}
             onSelectChat={ws.onSelectChat}
             onCreateChat={ws.onCreateChat}
+            onDeleteChat={ws.deleteChat}
             onUpload={ws.uploadDocument}
             onComputeEmbeddings={() => ws.computeEmbeddings(w.id)}
           />
@@ -148,8 +160,11 @@ function WorkspaceItem({
   onSelect,
   onSelectChat,
   onCreateChat,
+  onDeleteChat,
   onUpload,
   onComputeEmbeddings,
+  onWorkspaceRename,
+  onWorkspaceRenameFinished,
 }: {
   workspace: Workspace;
   isActive: boolean;
@@ -160,26 +175,87 @@ function WorkspaceItem({
   onSelect: () => void;
   onSelectChat: (id: string) => void;
   onCreateChat: () => void;
-  onUpload: (name: string) => void;
+  onDeleteChat: (chat_id: string) => void;
+  onUpload: (file: File) => void;
   onComputeEmbeddings: () => void;
+  onWorkspaceRename: (id: string, name: string) => void;
+  onWorkspaceRenameFinished: () => void;
 }) {
   const [openSection, setOpenSection] = useState<"documents" | "chats" | null>(
     null,
   );
+  const [isWorkspaceEditing, setIsWorkspaceEditing] = useState(false);
+  const [workspaceTempName, setWorkspaceTempName] = useState(workspace.name);
+  const inputRef = useRef(null);
   const toggle = (s: "documents" | "chats") =>
     setOpenSection((prev) => (prev === s ? null : s));
+
+  useEffect(() => {
+    if (isWorkspaceEditing) {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }
+  }, [isWorkspaceEditing]);
+
+  const handleSaveWorkspace = () => {
+    setIsWorkspaceEditing(false);
+    if (onWorkspaceRenameFinished) onWorkspaceRenameFinished();
+    if (workspaceTempName.trim() && workspaceTempName !== workspace.name) {
+      onWorkspaceRename(workspace.id, workspaceTempName);
+    } else {
+      setWorkspaceTempName(workspace.name); // Reset si está vacío
+    }
+  };
+
+  const handleKeyDownOnWorkspace = (e: { key: string }) => {
+    if (e.key === "Enter") handleSaveWorkspace();
+    if (e.key === "Escape") {
+      setWorkspaceTempName(workspace.name);
+      setIsWorkspaceEditing(false);
+      if (onWorkspaceRenameFinished) onWorkspaceRenameFinished();
+    }
+  };
 
   return (
     <div>
       <button
         onClick={onSelect}
-        className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm rounded-lg transition-colors ${isActive ? "bg-secondary text-foreground font-medium" : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"}`}
+        className={`w-full group flex items-center gap-2.5 px-3 py-2.5 text-sm rounded-lg transition-colors ${
+          isActive
+            ? "bg-secondary text-foreground font-medium"
+            : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+        }`}
       >
         <ChevronRight
           className={`w-3.5 h-3.5 shrink-0 transition-transform ${isActive ? "rotate-90" : ""}`}
         />
         <FolderOpen className="w-4 h-4 shrink-0" />
-        <span className="truncate flex-1 text-left">{workspace.name}</span>
+        {isWorkspaceEditing ? (
+          <input
+            ref={inputRef}
+            className="flex-1 bg-background border border-primary/50 outline-none rounded px-1 text-foreground min-w-0"
+            value={workspaceTempName}
+            onChange={(e) => setWorkspaceTempName(e.target.value)}
+            onBlur={handleSaveWorkspace}
+            onKeyDown={handleKeyDownOnWorkspace}
+            onClick={(e) => e.stopPropagation()} // Evita seleccionar el workspace al clicar el input
+          />
+        ) : (
+          <>
+            <span className="truncate flex-1 text-left">{workspace.name}</span>
+
+            {/* Pencil icon */}
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsWorkspaceEditing(true);
+              }}
+              className="p-1 opacity-0 group-hover:opacity-100 max-md:opacity-100 hover:bg-muted-foreground/10 rounded transition-all"
+            >
+              <Pencil className="w-3 h-3" />
+            </div>
+          </>
+        )}
         <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
           {docs.length > 0 && (
             <span className="flex items-center gap-0.5">
@@ -255,12 +331,27 @@ function WorkspaceItem({
                         <button
                           key={c.id}
                           onClick={() => onSelectChat(c.id)}
-                          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors ${c.id === activeChatId ? "bg-accent/10 text-accent font-medium" : "hover:bg-secondary/50 text-foreground"}`}
+                          className={`group w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors ${
+                            c.id === activeChatId
+                              ? "bg-accent/10 text-accent font-medium"
+                              : "hover:bg-secondary/50 text-foreground"
+                          }`}
                         >
                           <MessageSquare className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
                           <span className="truncate flex-1 text-left">
-                            {c.title}
+                            {c.name}
                           </span>
+                          {/* Delete Chat */}
+                          <div
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm("¿Borrar este chat?"))
+                                onDeleteChat(c.id);
+                            }}
+                            className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 p-1 hover:bg-destructive/20 hover:text-destructive rounded transition-all text-muted-foreground"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </div>
                         </button>
                       ))}
                       <button
@@ -323,7 +414,7 @@ function DocsSection({
   onComputeEmbeddings,
 }: {
   docs: DocType[];
-  onUpload: (name: string) => void;
+  onUpload: (file: File) => void;
   embeddingStatus: "idle" | "computing" | "done";
   onComputeEmbeddings: () => void;
 }) {
@@ -332,13 +423,13 @@ function DocsSection({
     (e: React.DragEvent) => {
       e.preventDefault();
       setDragOver(false);
-      Array.from(e.dataTransfer.files).forEach((f) => onUpload(f.name));
+      Array.from(e.dataTransfer.files).forEach((f) => onUpload(f));
     },
     [onUpload],
   );
   const handleFile = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      Array.from(e.target.files ?? []).forEach((f) => onUpload(f.name));
+      Array.from(e.target.files ?? []).forEach((f) => onUpload(f));
       e.target.value = "";
     },
     [onUpload],
@@ -352,12 +443,9 @@ function DocsSection({
           className="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs hover:bg-secondary/50 transition-colors"
         >
           <FileText className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-          <span className="truncate flex-1 text-foreground">{d.name}</span>
-          {d.status === "ready" ? (
-            <CheckCircle2 className="w-3 h-3 text-status-ready shrink-0" />
-          ) : (
-            <Loader2 className="w-3 h-3 text-status-processing animate-spin shrink-0" />
-          )}
+          <span title={d.filename} className="truncate flex-1 text-foreground">
+            {d.filename}
+          </span>
         </div>
       ))}
       <div
@@ -386,10 +474,7 @@ function DocsSection({
       {docs.length > 0 && (
         <button
           onClick={onComputeEmbeddings}
-          disabled={
-            embeddingStatus === "computing" ||
-            docs.every((d) => d.status !== "ready")
-          }
+          disabled={embeddingStatus === "computing"}
           className={`w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-medium transition-all duration-200 ${
             embeddingStatus === "done"
               ? "bg-[hsl(var(--status-ready)/0.1)] text-[hsl(var(--status-ready))] border border-[hsl(var(--status-ready)/0.3)]"
@@ -441,7 +526,7 @@ function ChatArea({
 
   useEffect(() => {
     if (messages.length > lastCount.current) {
-      setTyping(messages[messages.length - 1].role === "user");
+      setTyping(messages[messages.length - 1].owner === "human");
     }
     lastCount.current = messages.length;
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -542,7 +627,7 @@ function ChatArea({
 // ── Chat Bubble ─────────────────────────────────────────────
 
 function Bubble({ message }: { message: Message }) {
-  const isUser = message.role === "user";
+  const isUser = message.owner === "human";
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-4`}>
       <div className="max-w-[85%]">
@@ -551,19 +636,6 @@ function Bubble({ message }: { message: Message }) {
         >
           <MdContent content={message.content} />
         </div>
-        {message.citations && message.citations.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-2">
-            {message.citations.map((c, i) => (
-              <span
-                key={i}
-                className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-md bg-citation text-citation-foreground border border-citation-border"
-              >
-                <FileText className="w-3 h-3" /> Page {c.page} —{" "}
-                {c.documentName}
-              </span>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );
