@@ -1,6 +1,9 @@
-from collections.abc import AsyncGenerator
+import json
+from collections.abc import AsyncGenerator, Callable
 
 from config.config import config
+from config.logger import logger
+from psycopg import AsyncConnection
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
@@ -31,3 +34,17 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         except Exception:
             await session.rollback()
             raise
+
+
+async def pg_channel_listener(
+    channel_name: str, on_reveive_fn: Callable, session: AsyncSession = None, repository=None
+):
+    async with await AsyncConnection.connect(engine_url, autocommit=True) as conn:
+        await conn.execute(f"LISTEN {channel_name}")
+        async for notify in conn.notifies():
+            try:
+                payload: dict = json.loads(notify.payload)
+                data: dict = await on_reveive_fn(session=session, payload=payload, repository=repository)
+                yield {"event": "message", "data": json.dumps(data)}
+            except Exception as e:
+                logger.error(f"Error procesando notificación: {e}")

@@ -2,16 +2,19 @@ from contextlib import asynccontextmanager
 
 from config.middlewares import add_middlewares
 from core.core import Core
-from db.events import create_event_channel
+from core.shared.infrastructure.pg_channels import CHANNELS_REGISTRY
 from db.sql_alchemy_unit_of_work import Base, engine
 from fastapi import FastAPI
+from sqlalchemy import text
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-        await create_event_channel(conn=conn)
+        for trigger, on_trigger_fn in CHANNELS_REGISTRY.values():
+            conn.execute(text(on_trigger_fn))
+            conn.execute(text(trigger))
     yield
     await engine.dispose()
 

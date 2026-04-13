@@ -32,4 +32,4 @@ async def pg_channel_listener():
                             _: str = leann_adapter.chat(index_path=workspace_id, msg=msg)
 
     except Exception as e:
-        logger.error(f"❌ Error crítico en el worker: {e}")
+        logger.error(f"worker error: {e}")

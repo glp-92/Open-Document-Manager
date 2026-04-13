@@ -1,6 +1,10 @@
-from config.logger import logger
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncConnection
+from uuid import UUID
+
+from core.run.api.dto.requests import RunFinishedRequest
+from core.run.exceptions.run import RunNotFoundError
+from core.run.infrastructure.db_model import DBRun
+from core.run.infrastructure.repository_impl import RunRepositoryImpl
+from sqlalchemy.ext.asyncio import AsyncSession
 
 NEW_INGESTION_RUN_FN: str = """
     CREATE OR REPLACE FUNCTION new_ingestion_run_event()
@@ -11,11 +15,10 @@ NEW_INGESTION_RUN_FN: str = """
         SELECT json_agg(url) INTO document_urls
         FROM documents
         WHERE workspace_id = NEW.workspace_id;
-        PERFORM pg_notify('ingestion_run_events', json_build_object(
+        PERFORM pg_notify('new_ingestion_run', json_build_object(
             'type', 'embeddings',
             'status', NEW.status::text,
             'run_id', NEW.id,
-            'workspace_id', NEW.workspace_id,
             'urls', COALESCE(document_urls, '[]'::json) -- Si no hay, envía array vacío
         )::text);
         RETURN NEW;
@@ -27,22 +30,20 @@ NEW_INGESTION_RUN_TRIGGER: str = """
     BEGIN
         DROP TRIGGER IF EXISTS tr_new_run ON runs;
         CREATE TRIGGER tr_new_run
-        AFTER INSERT OR UPDATE ON runs
+        AFTER INSERT ON runs
         FOR EACH ROW
         WHEN (LOWER(NEW.status::text) = 'pending')
         EXECUTE FUNCTION new_ingestion_run_event();
     END $$;
 """
 FINISHED_INGESTION_RUN_FN: str = """
-    CREATE OR REPLACE FUNCTION notify_run_finished()
+    CREATE OR REPLACE FUNCTION tr_finished_run()
     RETURNS trigger AS $$
     BEGIN
         IF (NEW.status::text IN ('completed', 'error')) THEN
-            PERFORM pg_notify('ingestion run finished', json_build_object(
+            PERFORM pg_notify('finished_ingestion_run', json_build_object(
                 'run_id', NEW.id,
-                'workspace_id', NEW.workspace_id,
                 'status', NEW.status::text,
-                'message', 'ingest finished'
             )::text);
         END IF;
         RETURN NEW;
@@ -50,7 +51,7 @@ FINISHED_INGESTION_RUN_FN: str = """
     $$ LANGUAGE plpgsql;
 """
 FINISHED_INGESTION_RUN_TRIGGER: str = """
-    O $$
+    DO $$
     BEGIN
         DROP TRIGGER IF EXISTS tr_finished_run ON runs;
         CREATE TRIGGER tr_finished_run
@@ -62,10 +63,11 @@ FINISHED_INGESTION_RUN_TRIGGER: str = """
 """
 
 
-async def create_event_channel(conn: AsyncConnection):
-    await conn.execute(text(NEW_INGESTION_RUN_FN))
-    await conn.execute(text(NEW_INGESTION_RUN_TRIGGER))
-    logger.info("event channel ready for new run notify")
-    # await conn.execute(text(FINISHED_INGESTION_RUN_FN))
-    # await conn.execute(text(FINISHED_INGESTION_RUN_TRIGGER))
-    logger.info("event channel ready run finish notify")
+async def on_ingestion_run_finished_event(
+    payload: dict, session: AsyncSession, run_repository_impl: RunRepositoryImpl
+) -> dict:
+    payload: RunFinishedRequest = RunFinishedRequest(**payload)
+    db_run: DBRun = await run_repository_impl.find_by_id(session=session, id=UUID(payload.run_id))
+    if db_run is None:
+        raise RunNotFoundError(run_id=payload.run_id)
+    return {"id": str(db_run.id), "status": db_run.status}

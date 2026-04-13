@@ -23,3 +23,8 @@ class RunFilters(BaseModel):
 
 class NewRunRequest(BaseModel):
     workspace_id: UUID
+
+
+class RunFinishedRequest(BaseModel):
+    run_id: UUID
+    status: Status
