@@ -13,8 +13,8 @@ async def lifespan(_: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         for trigger, on_trigger_fn in CHANNELS_REGISTRY.values():
-            conn.execute(text(on_trigger_fn))
-            conn.execute(text(trigger))
+            await conn.execute(text(on_trigger_fn))
+            await conn.execute(text(trigger))
     yield
     await engine.dispose()
 
