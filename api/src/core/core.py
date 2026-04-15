@@ -10,6 +10,7 @@ from core.message.infrastructure.repository_impl import MessageRepositoryImpl
 from core.run.api.routes import RunRouter
 from core.run.application.service import RunService
 from core.run.infrastructure.repository_impl import RunRepositoryImpl
+from core.shared.api.routes import SSERouter
 from core.workspace.api.routes import WorkspaceRouter
 from core.workspace.application.service import WorkspaceService
 from core.workspace.infrastructure.repository_impl import WorkspaceRepositoryImpl
@@ -45,6 +46,7 @@ class Core:
         self.chat_router = ChatRouter(chat_service=self.chat_service)
         self.message_router = MessageRouter(message_service=self.message_service)
         self.run_router = RunRouter(run_service=self.run_service)
+        self.sse_router = SSERouter(run_repository_impl=self.run_repository_impl)
 
     def _include_routers_on_app(self):
         self.app.include_router(self.workspace_router.router, prefix="/workspaces", tags=["Workspaces"])
@@ -52,3 +54,4 @@ class Core:
         self.app.include_router(self.chat_router.router, prefix="/chats", tags=["Chats"])
         self.app.include_router(self.message_router.router, prefix="/messages", tags=["Messages"])
         self.app.include_router(self.run_router.router, prefix="/runs", tags=["Runs"])
+        self.app.include_router(self.sse_router.router, prefix="/runs", tags=["SSE"])

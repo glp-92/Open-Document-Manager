@@ -7,6 +7,7 @@ import {
   Run,
 } from "@/types/workspace";
 import * as api from "@/api/endpoints";
+import { subscribeToRunEvents } from "@/api/endpoints";
 
 export function useWorkspaces() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -34,6 +35,17 @@ export function useWorkspaces() {
       })
       .catch(console.error)
       .finally(() => setLoading(false));
+  }, []);
+
+  // SSE for run status updates on realtime
+  useEffect(() => {
+    const sse = subscribeToRunEvents(
+      (data) => {
+        setRunStatus((prev) => ({ ...prev, [data.workspace_id]: data.status }));
+      },
+      (err) => console.error("SSE Connection failed", err),
+    );
+    return () => sse.close();
   }, []);
 
   // Fetch chats when active workspace changes
