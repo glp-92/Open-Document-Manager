@@ -1,5 +1,6 @@
 import datetime
 import json
+import traceback
 from collections.abc import AsyncGenerator, Callable
 
 from config.config import config
@@ -45,12 +46,13 @@ async def pg_channel_listener(channel_name: str, on_receive_fn: Callable, reposi
             try:
                 payload = json.loads(notify.payload)
                 async with session_local() as session:
-                    data = await on_receive_fn(session=session, payload=payload, repository=repository)
+                    data: dict = await on_receive_fn(session=session, payload=payload, repository=repository)
                     yield {
                         "event": "message",
-                        "data": json.dumps(data),
-                        "id": str(datetime.datetime.now(datetime.UTC).timestamp()),
+                        "data": data,
+                        "event_id": str(datetime.datetime.now(datetime.UTC).timestamp()),
                     }
             except Exception as e:
+                traceback.print_exc()
                 logger.error(f"error processing notify: {e}")
                 continue

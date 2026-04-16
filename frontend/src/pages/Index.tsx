@@ -171,7 +171,7 @@ function WorkspaceItem({
   activeChatId: string | null;
   chats: Chat[];
   docs: DocType[];
-  embeddingStatus: "idle" | "computing" | "done";
+  embeddingStatus: "pending" | "completed" | "error" | "deleted";
   onSelect: () => void;
   onSelectChat: (id: string) => void;
   onCreateChat: () => void;
@@ -415,7 +415,7 @@ function DocsSection({
 }: {
   docs: DocType[];
   onUpload: (file: File) => void;
-  embeddingStatus: "idle" | "computing" | "done";
+  embeddingStatus: "pending" | "completed" | "error" | "deleted";
   onComputeEmbeddings: () => void;
 }) {
   const [dragOver, setDragOver] = useState(false);
@@ -437,17 +437,34 @@ function DocsSection({
 
   return (
     <div className="pl-5 space-y-1 py-1">
-      {docs.map((d) => (
-        <div
-          key={d.id}
-          className="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs hover:bg-secondary/50 transition-colors"
-        >
-          <FileText className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-          <span title={d.filename} className="truncate flex-1 text-foreground">
-            {d.filename}
-          </span>
-        </div>
-      ))}
+      {docs.map((d) => {
+        const isReady = d.storage_status === "ready";
+        return (
+          <div
+            key={d.id}
+            className={`
+        flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-all
+        ${
+          isReady
+            ? "hover:bg-secondary/50 text-foreground"
+            : "opacity-40 grayscale-[0.5] italic pointer-events-none"
+        }
+      `}
+          >
+            <FileText
+              className={`w-3.5 h-3.5 shrink-0 ${isReady ? "text-muted-foreground" : "text-muted"}`}
+            />
+            <span title={d.filename} className="truncate flex-1">
+              {d.filename}
+            </span>
+            {!isReady && (
+              <span className="text-[10px] animate-pulse text-muted-foreground">
+                {d.storage_status}...
+              </span>
+            )}
+          </div>
+        );
+      })}
       <div
         onDragOver={(e) => {
           e.preventDefault();
@@ -474,20 +491,20 @@ function DocsSection({
       {docs.length > 0 && (
         <button
           onClick={onComputeEmbeddings}
-          disabled={embeddingStatus === "computing"}
+          disabled={embeddingStatus === "pending"}
           className={`w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-            embeddingStatus === "done"
+            embeddingStatus === "completed"
               ? "bg-[hsl(var(--status-ready)/0.1)] text-[hsl(var(--status-ready))] border border-[hsl(var(--status-ready)/0.3)]"
-              : embeddingStatus === "computing"
+              : embeddingStatus === "pending"
                 ? "bg-secondary text-muted-foreground cursor-wait border border-border"
                 : "bg-accent text-accent-foreground hover:bg-accent/90 shadow-sm hover:shadow-md"
           }`}
         >
-          {embeddingStatus === "computing" ? (
+          {embeddingStatus === "pending" ? (
             <>
               <Loader2 className="w-3.5 h-3.5 animate-spin" /> Computing…
             </>
-          ) : embeddingStatus === "done" ? (
+          ) : embeddingStatus === "completed" ? (
             <>
               <CheckCircle2 className="w-3.5 h-3.5" /> Ready
             </>

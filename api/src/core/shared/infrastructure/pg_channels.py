@@ -1,5 +1,6 @@
 from enum import StrEnum
 
+from core.document.infrastructure.pg_events import FINISHED_UPLOAD_DOCUMENT_FN, FINISHED_UPLOAD_DOCUMENT_TRIGGER
 from core.run.infrastructure.pg_events import (
     FINISHED_INGESTION_RUN_FN,
     FINISHED_INGESTION_RUN_TRIGGER,
@@ -11,9 +12,11 @@ from core.run.infrastructure.pg_events import (
 class Channels(StrEnum):
     NEW_INGESTION_RUN = "new_ingestion_run"
     FINISHED_INGESTION_RUN = "finished_ingestion_run"
+    FINISHED_UPLOAD_DOCUMENT = "finished_upload_document"
 
 
 CHANNELS_REGISTRY: dict[str, tuple[str, str]] = {
     Channels.NEW_INGESTION_RUN: (NEW_INGESTION_RUN_TRIGGER, NEW_INGESTION_RUN_FN),
     Channels.FINISHED_INGESTION_RUN: (FINISHED_INGESTION_RUN_TRIGGER, FINISHED_INGESTION_RUN_FN),
+    Channels.FINISHED_UPLOAD_DOCUMENT: (FINISHED_UPLOAD_DOCUMENT_TRIGGER, FINISHED_UPLOAD_DOCUMENT_FN),
 }

@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
+from core.document.domain.model import StorageStatus
 from pydantic import BaseModel
 
 
@@ -14,6 +15,7 @@ class DocumentResponse(BaseModel):
     mime: str | None = None
     created_at: datetime
     updated_at: datetime
+    storage_status: StorageStatus
 
 
 class UploadDocumentOptimisticResponse(BaseModel):

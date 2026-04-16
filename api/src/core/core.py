@@ -46,7 +46,9 @@ class Core:
         self.chat_router = ChatRouter(chat_service=self.chat_service)
         self.message_router = MessageRouter(message_service=self.message_service)
         self.run_router = RunRouter(run_service=self.run_service)
-        self.sse_router = SSERouter(run_repository_impl=self.run_repository_impl)
+        self.sse_router = SSERouter(
+            run_repository_impl=self.run_repository_impl, document_repository_impl=self.document_repository_impl
+        )
 
     def _include_routers_on_app(self):
         self.app.include_router(self.workspace_router.router, prefix="/workspaces", tags=["Workspaces"])
@@ -54,4 +56,4 @@ class Core:
         self.app.include_router(self.chat_router.router, prefix="/chats", tags=["Chats"])
         self.app.include_router(self.message_router.router, prefix="/messages", tags=["Messages"])
         self.app.include_router(self.run_router.router, prefix="/runs", tags=["Runs"])
-        self.app.include_router(self.sse_router.router, prefix="/runs", tags=["SSE"])
+        self.app.include_router(self.sse_router.router, prefix="/events", tags=["SSE"])

@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
+from core.document.domain.model import StorageStatus
 from pydantic import BaseModel
 
 
@@ -44,3 +45,8 @@ class DocumentStorageWebhookRequest(BaseModel):
     event_type: Literal["create", "update", "rename", "delete"]
     key: str
     message: DocumentStorageWebhookMessage
+
+
+class UploadFinishedRequest(BaseModel):
+    document_id: UUID
+    storage_status: StorageStatus

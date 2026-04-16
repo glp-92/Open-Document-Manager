@@ -7,7 +7,10 @@ import {
   Run,
 } from "@/types/workspace";
 import * as api from "@/api/endpoints";
-import { subscribeToRunEvents } from "@/api/endpoints";
+import {
+  subscribeToDocumentEvents,
+  subscribeToRunEvents,
+} from "@/api/endpoints";
 
 export function useWorkspaces() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -42,6 +45,29 @@ export function useWorkspaces() {
     const sse = subscribeToRunEvents(
       (data) => {
         setRunStatus((prev) => ({ ...prev, [data.workspace_id]: data.status }));
+      },
+      (err) => console.error("SSE Connection failed", err),
+    );
+    return () => sse.close();
+  }, []);
+
+  // SSE for document status updates on realtime
+  useEffect(() => {
+    const sse = subscribeToDocumentEvents(
+      (payload) => {
+        console.log("Document event received", payload);
+        setDocuments((prev) =>
+          prev.map((doc) => {
+            if (doc.id === payload.data.id) {
+              return {
+                ...doc,
+                status: payload.data.storage_status,
+                updated_at: new Date().toISOString(),
+              };
+            }
+            return doc;
+          }),
+        );
       },
       (err) => console.error("SSE Connection failed", err),
     );
@@ -204,23 +230,23 @@ export function useWorkspaces() {
 
   // ── Runs (replaces embeddings) ────────────────────────────
   const [runStatus, setRunStatus] = useState<
-    Record<string, "idle" | "computing" | "done">
+    Record<string, "pending" | "completed" | "error" | "deleted">
   >({});
 
   const computeEmbeddings = useCallback(async (workspaceId: string) => {
-    setRunStatus((prev) => ({ ...prev, [workspaceId]: "computing" }));
+    setRunStatus((prev) => ({ ...prev, [workspaceId]: "pending" }));
     try {
       await api.createRun(workspaceId);
-      setRunStatus((prev) => ({ ...prev, [workspaceId]: "done" }));
+      setRunStatus((prev) => ({ ...prev, [workspaceId]: "pending" }));
     } catch (e) {
       console.error(e);
-      setRunStatus((prev) => ({ ...prev, [workspaceId]: "idle" }));
+      setRunStatus((prev) => ({ ...prev, [workspaceId]: "error" }));
     }
   }, []);
 
   const getEmbeddingStatus = useCallback(
-    (workspaceId: string): "idle" | "computing" | "done" => {
-      return runStatus[workspaceId] ?? "idle";
+    (workspaceId: string): "pending" | "completed" | "error" | "deleted" => {
+      return runStatus[workspaceId] ?? "pending";
     },
     [runStatus],
   );

@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from core.run.api.dto.requests import RunFinishedRequest
 from core.run.exceptions.run import RunNotFoundError
 from core.run.infrastructure.db_model import DBRun
@@ -17,7 +15,7 @@ NEW_INGESTION_RUN_FN: str = """
         WHERE workspace_id = NEW.workspace_id;
         PERFORM pg_notify('new_ingestion_run', json_build_object(
             'type', 'embeddings',
-            'status', NEW.status::text,
+            'status', LOWER(NEW.status::text),
             'run_id', NEW.id,
             'urls', COALESCE(document_urls, '[]'::json)
         )::text);
@@ -30,17 +28,17 @@ NEW_INGESTION_RUN_TRIGGER: str = """
     CREATE TRIGGER tr_new_run
     AFTER INSERT ON runs
     FOR EACH ROW
-    WHEN (LOWER(NEW.status::text) = 'pending')
+    WHEN (LOWER(NEW.status) = 'pending')
     EXECUTE FUNCTION new_ingestion_run_event();
 """
 FINISHED_INGESTION_RUN_FN: str = """
     CREATE OR REPLACE FUNCTION notify_run_finished()
     RETURNS trigger AS $$
     BEGIN
-        IF (NEW.status::text IN ('completed', 'error')) THEN
+        IF (LOWER(NEW.status) IN ('completed', 'error')) THEN
             PERFORM pg_notify('finished_ingestion_run', json_build_object(
                 'run_id', NEW.id,
-                'status', NEW.status::text  -- Coma eliminada aquí
+                'status', NEW.status
             )::text);
         END IF;
         RETURN NEW;
@@ -59,7 +57,7 @@ FINISHED_INGESTION_RUN_TRIGGER: str = """
 
 async def on_ingestion_run_finished_event(payload: dict, session: AsyncSession, repository: RunRepositoryImpl) -> dict:
     payload: RunFinishedRequest = RunFinishedRequest(**payload)
-    db_run: DBRun = await repository.find_by_id(session=session, id=UUID(payload.run_id))
+    db_run: DBRun = await repository.find_by_id(session=session, id=payload.run_id)
     if db_run is None:
         raise RunNotFoundError(run_id=payload.run_id)
-    return {"id": str(db_run.id), "status": db_run.status}
+    return {"id": str(db_run.id), "workspace_id": str(db_run.workspace_id), "status": db_run.status}

@@ -31,8 +31,19 @@ export interface Document {
   url?: string | null;
   size?: number | null;
   mime?: string | null;
+  storage_status?: "pending" | "ready" | "error" | "deleted";
   created_at: string;
   updated_at: string;
+}
+
+export interface DocumentEventPayload {
+  event: string;
+  event_id: string;
+  data: {
+    id: string;
+    storage_status: "pending" | "ready" | "error" | "deleted";
+    workspace_id: string;
+  };
 }
 
 export interface Run {
