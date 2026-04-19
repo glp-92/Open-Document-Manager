@@ -3,7 +3,7 @@ WORKDIR /app
 COPY package.json bun.lock* package-lock.json* ./
 RUN npm ci --ignore-scripts
 COPY . .
-ARG VITE_API_BASE=/api
+ARG VITE_API_BASE=http://api:8080/api/v1
 ENV VITE_API_BASE=$VITE_API_BASE
 RUN npm run build
 

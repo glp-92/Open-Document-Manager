@@ -72,17 +72,23 @@ class DocumentService:
         return
 
     async def _on_rename(self, session: AsyncSession, document_id: UUID, key: str, entry: DocumentStorageWebhookEntry):
-        db_document: DBDocument = self.document_repository_impl.find_by_id(session=session, id=document_id)
+        db_document: DBDocument = await self.document_repository_impl.find_by_id(session=session, id=document_id)
         if db_document is None:
             raise DocumentNotFoundError(document_id=document_id)
         db_document.url = key
         db_document.filename = entry.name
         return
 
+    async def _filter_folder_creation_events(self, request: DocumentStorageWebhookRequest) -> bool:
+        if request.message.new_entry.is_directory:
+            logger.info("received webhook for a directory creation event, ignoring.")
+            return True
+        return False
+
     async def process_storage_webhooks(
         self, session: AsyncSession, request: DocumentStorageWebhookRequest
     ) -> DocumentStorageWebhookResponse:
-        if request.message.new_entry.is_directory:
+        if await self._filter_folder_creation_events(request):
             return DocumentStorageWebhookResponse(status="ok")
         document_id: UUID = UUID(request.key.strip("/").split("/")[-2])
         match request.event_type:
