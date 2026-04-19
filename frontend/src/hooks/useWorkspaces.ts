@@ -61,7 +61,7 @@ export function useWorkspaces() {
             if (doc.id === payload.data.id) {
               return {
                 ...doc,
-                status: payload.data.storage_status,
+                storage_status: payload.data.storage_status,
                 updated_at: new Date().toISOString(),
               };
             }
