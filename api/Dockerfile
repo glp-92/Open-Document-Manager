@@ -1,4 +1,4 @@
-FROM python:3.12-slim as builder
+FROM python:3.14-slim as builder
 RUN apt update && apt upgrade -y \
     && apt install -y --no-install-recommends libpq-dev gcc \
     && apt clean \
@@ -17,7 +17,7 @@ RUN uv sync \
 RUN ls -R /app/.venv/bin/fastapi || echo "EL BINARIO NO ESTÁ AQUÍ"
 RUN python -c "import sys; print(sys.path)"
 
-FROM python:3.12-slim
+FROM python:3.14-slim
 RUN apt update && apt install -y --no-install-recommends \
     libpq5 \
     && rm -rf /var/lib/apt/lists/*
