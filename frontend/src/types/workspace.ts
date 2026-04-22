@@ -96,4 +96,6 @@ export interface DocumentFilters extends PaginationParams {
 export interface RunFilters extends PaginationParams {
   workspace_id?: string;
   status?: Run["status"];
+  order_by?: "workspace_id" | "created_at" | "updated_at" | "completed_at" | "status";
+  order?: "asc" | "desc";
 }

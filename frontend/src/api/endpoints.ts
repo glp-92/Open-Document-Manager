@@ -143,9 +143,10 @@ export async function getRuns(
 ): Promise<{ total: number; runs: Run[] }> {
   return request(
     "GET",
-    `/runs${qs({ limit: f.limit, offset: f.offset, workspace_id: f.workspace_id, status: f.status })}`,
+    `/runs${qs({ limit: f.limit, offset: f.offset, workspace_id: f.workspace_id, status: f.status, order_by: f.order_by, order: f.order })}`,
   );
 }
+
 
 export async function createRun(workspace_id: string): Promise<Run> {
   return request("POST", "/runs", { workspace_id });

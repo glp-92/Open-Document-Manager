@@ -4,7 +4,6 @@ import {
   Chat,
   Message,
   Document as DocType,
-  Run,
 } from "@/types/workspace";
 import * as api from "@/api/endpoints";
 import {
@@ -45,6 +44,12 @@ export function useWorkspaces() {
     const sse = subscribeToRunEvents(
       (data) => {
         setRunStatus((prev) => ({ ...prev, [data.workspace_id]: data.status }));
+        if (data.status !== "pending") {
+          setRunRequestInFlight((prev) => ({
+            ...prev,
+            [data.workspace_id]: false,
+          }));
+        }
       },
       (err) => console.error("SSE Connection failed", err),
     );
@@ -230,26 +235,51 @@ export function useWorkspaces() {
 
   // ── Runs (replaces embeddings) ────────────────────────────
   const [runStatus, setRunStatus] = useState<
-    Record<string, "pending" | "completed" | "error" | "deleted">
+    Record<string | null, null | "pending" | "completed" | "error" | "deleted">
+  >({});
+  const [runRequestInFlight, setRunRequestInFlight] = useState<
+    Record<string, boolean>
   >({});
 
   const computeEmbeddings = useCallback(async (workspaceId: string) => {
+    setRunRequestInFlight((prev) => ({ ...prev, [workspaceId]: true }));
     setRunStatus((prev) => ({ ...prev, [workspaceId]: "pending" }));
     try {
       await api.createRun(workspaceId);
       setRunStatus((prev) => ({ ...prev, [workspaceId]: "pending" }));
     } catch (e) {
       console.error(e);
+      setRunRequestInFlight((prev) => ({ ...prev, [workspaceId]: false }));
       setRunStatus((prev) => ({ ...prev, [workspaceId]: "error" }));
     }
   }, []);
 
-  const getEmbeddingStatus = useCallback(
-    (workspaceId: string): "pending" | "completed" | "error" | "deleted" => {
-      return runStatus[workspaceId] ?? "pending";
-    },
-    [runStatus],
-  );
+  const getEmbeddingStatus = useCallback(async (workspaceId: string) => {
+    try {
+      const response = await api.getRuns({
+        workspace_id: workspaceId,
+        order_by: "created_at",
+        order: "desc",
+        limit: 1,
+      });
+      setRunStatus((prev) => ({
+        ...prev,
+        [workspaceId]: response.runs[0]?.status ?? null,
+      }));
+      if (response.runs[0]?.status !== "pending") {
+        setRunRequestInFlight((prev) => ({ ...prev, [workspaceId]: false }));
+      }
+    } catch (e) {
+      console.error(e);
+      setRunRequestInFlight((prev) => ({ ...prev, [workspaceId]: false }));
+      setRunStatus((prev) => ({ ...prev, [workspaceId]: "error" }));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!activeWorkspaceId) return;
+    void getEmbeddingStatus(activeWorkspaceId);
+  }, [activeWorkspaceId, getEmbeddingStatus]);
 
   // ── Document upload (2-step: create → presigned PUT) ──────
   const uploadDocument = useCallback(
@@ -296,6 +326,8 @@ export function useWorkspaces() {
     uploadDocument,
     computeEmbeddings,
     getEmbeddingStatus,
+    runStatus,
+    runRequestInFlight,
     setEditingWorkspaceId,
   };
 }

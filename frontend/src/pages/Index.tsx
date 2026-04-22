@@ -132,7 +132,8 @@ function Sidebar(
                 ? ws.workspaceDocs
                 : []
             }
-            embeddingStatus={ws.getEmbeddingStatus(w.id)}
+            embeddingStatus={ws.runStatus[w.id] ?? null}
+            isEmbeddingActionRunning={Boolean(ws.runRequestInFlight[w.id])}
             onSelect={() => ws.selectWorkspace(w.id)}
             onWorkspaceRename={ws.editWorkspace}
             onWorkspaceRenameFinished={() => ws.setEditingWorkspaceId(null)}
@@ -157,6 +158,7 @@ function WorkspaceItem({
   chats,
   docs,
   embeddingStatus,
+  isEmbeddingActionRunning,
   onSelect,
   onSelectChat,
   onCreateChat,
@@ -171,7 +173,8 @@ function WorkspaceItem({
   activeChatId: string | null;
   chats: Chat[];
   docs: DocType[];
-  embeddingStatus: "pending" | "completed" | "error" | "deleted";
+  embeddingStatus: null | "pending" | "completed" | "error" | "deleted";
+  isEmbeddingActionRunning: boolean;
   onSelect: () => void;
   onSelectChat: (id: string) => void;
   onCreateChat: () => void;
@@ -303,6 +306,7 @@ function WorkspaceItem({
                       docs={docs}
                       onUpload={onUpload}
                       embeddingStatus={embeddingStatus}
+                      isEmbeddingActionRunning={isEmbeddingActionRunning}
                       onComputeEmbeddings={onComputeEmbeddings}
                     />
                   </motion.div>
@@ -411,14 +415,17 @@ function DocsSection({
   docs,
   onUpload,
   embeddingStatus,
+  isEmbeddingActionRunning,
   onComputeEmbeddings,
 }: {
   docs: DocType[];
   onUpload: (file: File) => void;
-  embeddingStatus: "pending" | "completed" | "error" | "deleted";
+  embeddingStatus: null | "pending" | "completed" | "error" | "deleted";
+  isEmbeddingActionRunning: boolean;
   onComputeEmbeddings: () => void;
 }) {
   const [dragOver, setDragOver] = useState(false);
+  const isComputing = embeddingStatus === "pending" || isEmbeddingActionRunning;
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
@@ -491,16 +498,16 @@ function DocsSection({
       {docs.length > 0 && (
         <button
           onClick={onComputeEmbeddings}
-          disabled={embeddingStatus === "pending"}
+          disabled={isComputing}
           className={`w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-medium transition-all duration-200 ${
             embeddingStatus === "completed"
               ? "bg-[hsl(var(--status-ready)/0.1)] text-[hsl(var(--status-ready))] border border-[hsl(var(--status-ready)/0.3)]"
-              : embeddingStatus === "pending"
+              : isComputing
                 ? "bg-secondary text-muted-foreground cursor-wait border border-border"
                 : "bg-accent text-accent-foreground hover:bg-accent/90 shadow-sm hover:shadow-md"
           }`}
         >
-          {embeddingStatus === "pending" ? (
+          {isComputing ? (
             <>
               <Loader2 className="w-3.5 h-3.5 animate-spin" /> Computing…
             </>
