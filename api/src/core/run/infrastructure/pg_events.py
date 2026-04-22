@@ -12,11 +12,12 @@ NEW_INGESTION_RUN_FN: str = """
     BEGIN
         SELECT json_agg(url) INTO document_urls
         FROM documents
-        WHERE workspace_id = NEW.workspace_id;
-        PERFORM pg_notify('new_ingestion_run', json_build_object(
+        WHERE workspace_id = NEW.workspace_id AND LOWER(storage_status::text) = 'ready';
+        PERFORM pg_notify('ingestion_run_events', json_build_object(
             'type', 'embeddings',
             'status', LOWER(NEW.status::text),
             'run_id', NEW.id,
+            'workspace_id', NEW.workspace_id,
             'urls', COALESCE(document_urls, '[]'::json)
         )::text);
         RETURN NEW;
@@ -28,14 +29,14 @@ NEW_INGESTION_RUN_TRIGGER: str = """
     CREATE TRIGGER tr_new_run
     AFTER INSERT ON runs
     FOR EACH ROW
-    WHEN (LOWER(NEW.status) = 'pending')
+    WHEN (LOWER(NEW.status::text) = 'pending')
     EXECUTE FUNCTION new_ingestion_run_event();
 """
 FINISHED_INGESTION_RUN_FN: str = """
     CREATE OR REPLACE FUNCTION notify_run_finished()
     RETURNS trigger AS $$
     BEGIN
-        IF (LOWER(NEW.status) IN ('completed', 'error')) THEN
+        IF (LOWER(NEW.status::text) IN ('completed', 'error')) THEN
             PERFORM pg_notify('finished_ingestion_run', json_build_object(
                 'run_id', NEW.id,
                 'status', NEW.status
