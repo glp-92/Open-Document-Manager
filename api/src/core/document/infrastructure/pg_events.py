@@ -8,10 +8,10 @@ FINISHED_UPLOAD_DOCUMENT_FN: str = """
     CREATE OR REPLACE FUNCTION notify_document_uploaded()
     RETURNS trigger AS $$
     BEGIN
-        IF (LOWER(NEW.storage_status) IN ('ready', 'error')) THEN
+        IF (NEW.storage_status) IN ('READY', 'ERROR') THEN
             PERFORM pg_notify('finished_upload_document', json_build_object(
                 'document_id', NEW.id::text,
-                'storage_status', LOWER(NEW.storage_status::text)
+                'storage_status', NEW.storage_status::text
             )::text);
         END IF;
         RETURN NEW;

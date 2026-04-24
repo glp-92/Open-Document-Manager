@@ -6,10 +6,10 @@ from pydantic import BaseModel
 
 
 class StorageStatus(StrEnum):
-    PENDING = "pending"
-    READY = "ready"
-    ERROR = "error"
-    DELETED = "deleted"
+    PENDING = "PENDING"
+    READY = "READY"
+    ERROR = "ERROR"
+    DELETED = "DELETED"
 
 
 class Document(BaseModel):

@@ -10,7 +10,7 @@ from core.run.infrastructure.pg_events import (
 
 
 class Channels(StrEnum):
-    NEW_INGESTION_RUN = "new_ingestion_run"
+    NEW_INGESTION_RUN = "ingestion_run_events"
     FINISHED_INGESTION_RUN = "finished_ingestion_run"
     FINISHED_UPLOAD_DOCUMENT = "finished_upload_document"
 

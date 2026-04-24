@@ -18,7 +18,7 @@ export interface Chat {
 export interface Message {
   id: string;
   chat_id: string;
-  owner: "human" | "ai";
+  owner: "HUMAN" | "AI";
   content: string;
   created_at: string;
   updated_at: string;
@@ -26,12 +26,12 @@ export interface Message {
 
 export interface Document {
   id: string;
-  worskpace_id: string;
+  workspace_id: string;
   filename: string;
   url?: string | null;
   size?: number | null;
   mime?: string | null;
-  storage_status?: "pending" | "ready" | "error" | "deleted";
+  storage_status?: "PENDING" | "READY" | "ERROR" | "DELETED";
   created_at: string;
   updated_at: string;
 }
@@ -41,7 +41,17 @@ export interface DocumentEventPayload {
   event_id: string;
   data: {
     id: string;
-    storage_status: "pending" | "ready" | "error" | "deleted";
+    storage_status: "PENDING" | "READY" | "ERROR" | "DELETED";
+    workspace_id: string;
+  };
+}
+
+export interface RunEventPayload {
+  event: string;
+  event_id: string;
+  data: {
+    id: string;
+    status: "PENDING" | "COMPLETED" | "ERROR" | "DELETED";
     workspace_id: string;
   };
 }
@@ -49,7 +59,7 @@ export interface DocumentEventPayload {
 export interface Run {
   id: string;
   workspace_id: string;
-  status: "pending" | "completed" | "error" | "deleted";
+  status: "PENDING" | "COMPLETED" | "ERROR" | "DELETED";
   created_at: string;
   updated_at?: string | null;
   completed_at?: string | null;

@@ -12,7 +12,7 @@ chat_payload: dict = {"workspace_id": None, "name": None}
 
 document_payload: dict = {"chat_id": None, "filename": None, "size": 1, "url": str(uuid4())}
 
-message_payload: dict = {"chat_id": None, "owner": "human", "content": None}
+message_payload: dict = {"chat_id": None, "owner": "HUMAN", "content": None}
 
 response: Response = requests.post(url=f"{URL}/workspaces", json=workspace_payload)
 workspace_id: str = response.json().get("id")

@@ -14,7 +14,7 @@ class DBRun(Base):
     __tablename__ = "runs"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    status = Column(Enum(Status, native_enum=False), nullable=False, default=Status.PENDING)
+    status = Column(Enum(Status), nullable=False, default=Status.PENDING)
     detail = Column(String(length=100), nullable=True)
     meta = Column(JSONB, nullable=True, default={})
     created_at = Column(DateTime(timezone=True), nullable=True, server_default=func.now())

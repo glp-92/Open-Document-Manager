@@ -6,10 +6,10 @@ from pydantic import BaseModel
 
 
 class Status(StrEnum):
-    PENDING = "pending"
-    COMPLETED = "completed"
-    ERROR = "error"
-    DELETED = "deleted"
+    PENDING = "PENDING"
+    COMPLETED = "COMPLETED"
+    ERROR = "ERROR"
+    DELETED = "DELETED"
 
 
 class Run(BaseModel):

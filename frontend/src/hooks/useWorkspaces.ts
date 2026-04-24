@@ -42,12 +42,16 @@ export function useWorkspaces() {
   // SSE for run status updates on realtime
   useEffect(() => {
     const sse = subscribeToRunEvents(
-      (data) => {
-        setRunStatus((prev) => ({ ...prev, [data.workspace_id]: data.status }));
-        if (data.status !== "pending") {
+      (payload) => {
+        console.log("Run event received", payload);
+        setRunStatus((prev) => ({
+          ...prev,
+          [payload.data.workspace_id]: payload.data.status,
+        }));
+        if (payload.data.status !== "PENDING") {
           setRunRequestInFlight((prev) => ({
             ...prev,
-            [data.workspace_id]: false,
+            [payload.data.workspace_id]: false,
           }));
         }
       },
@@ -210,7 +214,7 @@ export function useWorkspaces() {
       const tempMsg: Message = {
         id: crypto.randomUUID(),
         chat_id: chatId,
-        owner: "human",
+        owner: "HUMAN",
         content,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -218,7 +222,7 @@ export function useWorkspaces() {
       setMessages((prev) => [...prev, tempMsg]);
 
       try {
-        const response = await api.createMessage(chatId, content, "human");
+        const response = await api.createMessage(chatId, content, "HUMAN");
         setMessages((prev) => [
           ...prev.filter((m) => m.id !== tempMsg.id),
           response,
@@ -235,7 +239,7 @@ export function useWorkspaces() {
 
   // ── Runs (replaces embeddings) ────────────────────────────
   const [runStatus, setRunStatus] = useState<
-    Record<string | null, null | "pending" | "completed" | "error" | "deleted">
+    Record<string | null, null | "PENDING" | "COMPLETED" | "ERROR" | "DELETED">
   >({});
   const [runRequestInFlight, setRunRequestInFlight] = useState<
     Record<string, boolean>
@@ -243,14 +247,14 @@ export function useWorkspaces() {
 
   const computeEmbeddings = useCallback(async (workspaceId: string) => {
     setRunRequestInFlight((prev) => ({ ...prev, [workspaceId]: true }));
-    setRunStatus((prev) => ({ ...prev, [workspaceId]: "pending" }));
+    setRunStatus((prev) => ({ ...prev, [workspaceId]: "PENDING" }));
     try {
       await api.createRun(workspaceId);
-      setRunStatus((prev) => ({ ...prev, [workspaceId]: "pending" }));
+      setRunStatus((prev) => ({ ...prev, [workspaceId]: "PENDING" }));
     } catch (e) {
       console.error(e);
       setRunRequestInFlight((prev) => ({ ...prev, [workspaceId]: false }));
-      setRunStatus((prev) => ({ ...prev, [workspaceId]: "error" }));
+      setRunStatus((prev) => ({ ...prev, [workspaceId]: "ERROR" }));
     }
   }, []);
 
@@ -266,13 +270,13 @@ export function useWorkspaces() {
         ...prev,
         [workspaceId]: response.runs[0]?.status ?? null,
       }));
-      if (response.runs[0]?.status !== "pending") {
+      if (response.runs[0]?.status !== "PENDING") {
         setRunRequestInFlight((prev) => ({ ...prev, [workspaceId]: false }));
       }
     } catch (e) {
       console.error(e);
       setRunRequestInFlight((prev) => ({ ...prev, [workspaceId]: false }));
-      setRunStatus((prev) => ({ ...prev, [workspaceId]: "error" }));
+      setRunStatus((prev) => ({ ...prev, [workspaceId]: "ERROR" }));
     }
   }, []);
 

@@ -6,8 +6,8 @@ from pydantic import BaseModel
 
 
 class Owner(StrEnum):
-    HUMAN = "human"
-    AI = "ai"
+    HUMAN = "HUMAN"
+    AI = "AI"
 
 
 class Message(BaseModel):

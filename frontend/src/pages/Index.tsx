@@ -173,7 +173,7 @@ function WorkspaceItem({
   activeChatId: string | null;
   chats: Chat[];
   docs: DocType[];
-  embeddingStatus: null | "pending" | "completed" | "error" | "deleted";
+  embeddingStatus: null | "PENDING" | "COMPLETED" | "ERROR" | "DELETED";
   isEmbeddingActionRunning: boolean;
   onSelect: () => void;
   onSelectChat: (id: string) => void;
@@ -420,12 +420,12 @@ function DocsSection({
 }: {
   docs: DocType[];
   onUpload: (file: File) => void;
-  embeddingStatus: null | "pending" | "completed" | "error" | "deleted";
+  embeddingStatus: null | "PENDING" | "COMPLETED" | "ERROR" | "DELETED";
   isEmbeddingActionRunning: boolean;
   onComputeEmbeddings: () => void;
 }) {
   const [dragOver, setDragOver] = useState(false);
-  const isComputing = embeddingStatus === "pending" || isEmbeddingActionRunning;
+  const isComputing = embeddingStatus === "PENDING" || isEmbeddingActionRunning;
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
@@ -445,7 +445,7 @@ function DocsSection({
   return (
     <div className="pl-5 space-y-1 py-1">
       {docs.map((d) => {
-        const isReady = d.storage_status === "ready";
+        const isReady = d.storage_status === "READY";
         return (
           <div
             key={d.id}
@@ -500,7 +500,7 @@ function DocsSection({
           onClick={onComputeEmbeddings}
           disabled={isComputing}
           className={`w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-            embeddingStatus === "completed"
+            embeddingStatus === "COMPLETED"
               ? "bg-[hsl(var(--status-ready)/0.1)] text-[hsl(var(--status-ready))] border border-[hsl(var(--status-ready)/0.3)]"
               : isComputing
                 ? "bg-secondary text-muted-foreground cursor-wait border border-border"
@@ -511,7 +511,7 @@ function DocsSection({
             <>
               <Loader2 className="w-3.5 h-3.5 animate-spin" /> Computing…
             </>
-          ) : embeddingStatus === "completed" ? (
+          ) : embeddingStatus === "COMPLETED" ? (
             <>
               <CheckCircle2 className="w-3.5 h-3.5" /> Ready
             </>
@@ -550,7 +550,7 @@ function ChatArea({
 
   useEffect(() => {
     if (messages.length > lastCount.current) {
-      setTyping(messages[messages.length - 1].owner === "human");
+      setTyping(messages[messages.length - 1].owner === "HUMAN");
     }
     lastCount.current = messages.length;
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -651,7 +651,7 @@ function ChatArea({
 // ── Chat Bubble ─────────────────────────────────────────────
 
 function Bubble({ message }: { message: Message }) {
-  const isUser = message.owner === "human";
+  const isUser = message.owner === "HUMAN";
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-4`}>
       <div className="max-w-[85%]">

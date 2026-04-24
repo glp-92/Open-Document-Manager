@@ -14,7 +14,7 @@ class DBMessage(Base):
     __tablename__ = "messages"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    owner = Column(Enum(Owner, native_enum=False), nullable=False)
+    owner = Column(Enum(Owner), nullable=False)
     content = Column(TEXT, nullable=False)
     created_at = Column(DateTime(timezone=True), nullable=True, server_default=func.now())
     updated_at = Column(DateTime(timezone=True), nullable=True, server_default=func.now(), server_onupdate=func.now())

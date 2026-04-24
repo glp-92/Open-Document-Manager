@@ -6,6 +6,7 @@ from collections.abc import AsyncGenerator, Callable
 from config.config import config
 from config.logger import logger
 from psycopg import AsyncConnection
+from psycopg.sql import SQL, Identifier
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
@@ -41,9 +42,11 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 async def pg_channel_listener(channel_name: str, on_receive_fn: Callable, repository=None):
     conn = await AsyncConnection.connect(pg_dsn, autocommit=True)
     async with conn:
-        await conn.execute(f"LISTEN {channel_name}")
+        await conn.execute(SQL("LISTEN {}").format(Identifier(channel_name)))
+        logger.info(f"listening postgres channel {channel_name}")
         async for notify in conn.notifies():
             try:
+                logger.info(f"received postgres notify on {notify.channel}: {notify.payload}")
                 payload = json.loads(notify.payload)
                 async with session_local() as session:
                     data: dict = await on_receive_fn(session=session, payload=payload, repository=repository)

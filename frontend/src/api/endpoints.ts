@@ -11,6 +11,7 @@ import {
   DocumentFilters,
   RunFilters,
   DocumentEventPayload,
+  RunEventPayload,
 } from "@/types/workspace";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "/api/v1";
@@ -105,7 +106,7 @@ export async function getMessages(
 export async function createMessage(
   chat_id: string,
   content: string,
-  owner: "human" | "ai" = "human",
+  owner: "HUMAN" | "AI" = "HUMAN",
 ): Promise<Message> {
   return request("POST", "/messages", { chat_id, content, owner });
 }
@@ -158,18 +159,14 @@ export async function deleteRun(id: string): Promise<void> {
 
 // SSE server stream
 export function subscribeToRunEvents(
-  onMessage: (data: {
-    run_id: string;
-    status: "pending" | "completed" | "error" | "deleted";
-    workspace_id: string;
-  }) => void,
+  onMessage: (payload: RunEventPayload) => void,
   onError?: (err: Event) => void,
 ): EventSource {
   const url = `${API_BASE}/events/runs`;
   const eventSource = new EventSource(url);
   eventSource.onmessage = (event) => {
     try {
-      const parsedData = JSON.parse(event.data);
+      const parsedData: RunEventPayload = JSON.parse(event.data);
       onMessage(parsedData);
     } catch (e) {
       console.error("Error parsing SSE data", e);

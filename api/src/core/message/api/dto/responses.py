@@ -8,7 +8,7 @@ from pydantic import BaseModel
 class MessageResponse(BaseModel):
     id: UUID
     chat_id: UUID
-    owner: Literal["human", "ai"]
+    owner: Literal["HUMAN", "AI"]
     content: str
     created_at: datetime
     updated_at: datetime
