@@ -75,3 +75,40 @@ class LeannAdapter:
             logger.exception(f"failure on building LEANN index: {e}")
             return Status.ERROR
         return Status.COMPLETED
+
+    def chat(self, index_path: str, msg: str) -> str:
+        leann_bin = self._resolve_leann_executable()
+        command = [
+            leann_bin,
+            "ask",
+            index_path,
+            "--model",
+            self.llm_config["model"],
+        ]
+        logger.info("running command: " + " ".join(command))
+        try:
+            process = subprocess.Popen(
+                command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+            )
+            if process.stdin is None or process.stdout is None:
+                logger.error("leann process stdin or stdout is not available")
+                return ""
+            logger.info(f"sending message to leann: {msg}")
+            process.stdin.write(msg + "\n")
+            process.stdin.flush()
+            response = ""
+            while True:
+                line = process.stdout.readline()
+                if line == "" and process.poll() is not None:
+                    break
+                if line:
+                    logger.info(f"[LEANN] {line.strip()}")
+                    response += line
+            rc = process.wait()
+            if rc != 0:
+                logger.error(f"leann chat process exited with return code {rc}")
+                return ""
+            return response.strip()
+        except Exception as e:
+            logger.exception(f"failure on leann chat: {e}")
+            return ""

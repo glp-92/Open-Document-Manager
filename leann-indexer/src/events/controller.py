@@ -22,8 +22,12 @@ async def pg_channel_listener():
             logger.info("connection success! listening new events")
             async with conn.cursor() as cur:
                 await cur.execute("listen ingestion_run_events")
+                await cur.execute("listen new_human_chat_message")
                 async for notify in conn.notifies():
+                    logger.info(f"received notify on channel {notify.channel}")
                     payload: dict = json.loads(notify.payload)
+                    if notify.channel == "new_human_chat_message":
+                        payload.setdefault("type", "chat")
                     match payload.get("type"):
                         case "embeddings":
                             await calculate_embeddings(
