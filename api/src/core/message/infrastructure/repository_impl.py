@@ -57,7 +57,14 @@ class MessageRepositoryImpl(MessageRepository):
         return db_messages, total
 
     @staticmethod
+    async def find_by_id(session: AsyncSession, id: UUID) -> DBMessage | None:
+        stmt = select(DBMessage).where(DBMessage.id == id)
+        result: Result = await session.execute(stmt)
+        db_message: DBMessage | None = result.scalar_one_or_none()
+        return db_message
+
+    @staticmethod
     async def delete_by_id(session: AsyncSession, id: UUID) -> UUID | None:
         stmt = delete(DBMessage).where(DBMessage.id == id).returning(DBMessage.id)
-        result: Result = session.execute(stmt)
+        result: Result = await session.execute(stmt)
         return result.scalar_one_or_none()

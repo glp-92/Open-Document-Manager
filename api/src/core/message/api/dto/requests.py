@@ -23,3 +23,12 @@ class NewMessageRequest(BaseModel):
     chat_id: UUID
     owner: Literal["HUMAN", "AI"] = "HUMAN"
     content: str
+
+
+class NewMessageFromIARequest(BaseModel):
+    message_id: UUID
+    chat_id: UUID
+    owner: Literal["HUMAN", "AI"] = "AI"
+    content: str
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
