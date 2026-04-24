@@ -13,6 +13,10 @@ class LeannAdapter:
             "type": "ollama",
             "model": config.llm_model,
         }
+        self.embedding_config: dict = {
+            "mode": "ollama",
+            "model": config.embedding_model,
+        }
 
     @staticmethod
     def _resolve_leann_executable() -> str:
@@ -37,9 +41,9 @@ class LeannAdapter:
             "--docs",
             str(docs_dir),
             "--embedding-mode",
-            "ollama",
+            self.embedding_config["mode"],
             "--embedding-model",
-            config.embedding_model,
+            self.embedding_config["model"],
             "--backend",
             "hnsw",
             "--force",
@@ -84,6 +88,8 @@ class LeannAdapter:
             index_path,
             "--model",
             self.llm_config["model"],
+            "--top-k",
+            "3",
         ]
         logger.info("running command: " + " ".join(command))
         try:

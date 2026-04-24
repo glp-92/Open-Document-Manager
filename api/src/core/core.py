@@ -47,7 +47,9 @@ class Core:
         self.message_router = MessageRouter(message_service=self.message_service)
         self.run_router = RunRouter(run_service=self.run_service)
         self.sse_router = SSERouter(
-            run_repository_impl=self.run_repository_impl, document_repository_impl=self.document_repository_impl
+            run_repository_impl=self.run_repository_impl,
+            document_repository_impl=self.document_repository_impl,
+            message_repository_impl=self.message_repository_impl,
         )
 
     def _include_routers_on_app(self):

@@ -8,6 +8,7 @@ import {
 import * as api from "@/api/endpoints";
 import {
   subscribeToDocumentEvents,
+  subscribeToMessagesEvents,
   subscribeToRunEvents,
 } from "@/api/endpoints";
 
@@ -75,6 +76,31 @@ export function useWorkspaces() {
               };
             }
             return doc;
+          }),
+        );
+      },
+      (err) => console.error("SSE Connection failed", err),
+    );
+    return () => sse.close();
+  }, []);
+
+  // SSE for message status updates on realtime
+  useEffect(() => {
+    const sse = subscribeToMessagesEvents(
+      (payload) => {
+        console.log("Message event received", payload);
+        setMessages((prev) =>
+          prev.map((msg) => {
+            if (msg.id === payload.data.id) {
+              return {
+                ...msg,
+                content: payload.data.content,
+                owner: payload.data.owner,
+                created_at: payload.data.created_at,
+                updated_at: new Date().toISOString(),
+              };
+            }
+            return msg;
           }),
         );
       },

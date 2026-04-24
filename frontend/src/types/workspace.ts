@@ -46,6 +46,18 @@ export interface DocumentEventPayload {
   };
 }
 
+export interface MessageEventPayload {
+  event: string;
+  event_id: string;
+  data: {
+    id: string;
+    chat_id: string;
+    owner: "HUMAN" | "AI";
+    content: string;
+    created_at: string;
+  };
+}
+
 export interface RunEventPayload {
   event: string;
   event_id: string;
@@ -106,6 +118,11 @@ export interface DocumentFilters extends PaginationParams {
 export interface RunFilters extends PaginationParams {
   workspace_id?: string;
   status?: Run["status"];
-  order_by?: "workspace_id" | "created_at" | "updated_at" | "completed_at" | "status";
+  order_by?:
+    | "workspace_id"
+    | "created_at"
+    | "updated_at"
+    | "completed_at"
+    | "status";
   order?: "asc" | "desc";
 }

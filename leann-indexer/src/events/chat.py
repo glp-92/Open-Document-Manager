@@ -16,11 +16,15 @@ class ChatRequest(BaseModel):
 
 
 async def make_response_on_chat(payload: dict, leann_adapter: LeannAdapter, pg_adapter: PostgresDBAdapter):
-    logger.info(f"received chat message {payload}, {pg_adapter}")
+    logger.info(f"received chat message {payload}")
     chat_request: ChatRequest = ChatRequest(**payload)
     workspace_id: str | None = chat_request.workspace_id
     content: str = chat_request.content
     if not workspace_id:
         logger.error("missing workspace_id in chat event payload")
         return
-    _: str = leann_adapter.chat(index_path=workspace_id, msg=content)
+    response: str = leann_adapter.chat(index_path=workspace_id, msg=content)
+    logger.info(f"full chat response: {response}")
+    pg_adapter.insert_chat_message(chat_id=chat_request.chat_id, content=response, owner="AI")
+    logger.info(f"finished processing chat request for workspace {workspace_id}")
+    return
