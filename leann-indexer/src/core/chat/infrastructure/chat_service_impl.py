@@ -48,12 +48,12 @@ class ChatServiceImpl(ChatService):
         return Chat(model=model, text=clean_text.strip(), processing_time=processing_time)
 
     def _format_output(self, sections: Chat) -> str:
-        blocks = [
+        sections = [
             f"🧠 **{sections.model}**",
-            f"🔍\\n\\n{sections.text}",
+            f"🔍\n\n{sections.text}",
             f"⏳ **{sections.processing_time} s**",
         ]
-        return "\\n\\n".join(blocks)
+        return "\n\n".join(sections)
 
     def _post_process_output(self, response: str, processing_time: str, input_language: str) -> str:
         logger.info(f"post-processing response from LLM, input language: {input_language}")
