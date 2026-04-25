@@ -40,11 +40,11 @@ class ChatServiceImpl(ChatService):
                 ),
                 processing_time=processing_time,
             )
-        model_match = re.search(r"Using (.*?)\\s\\(", response)
+        model_match = re.search(r"Using (.*?)\s\(", response)
         model = model_match.group(1) if model_match else "unknown"
-        clean_text = re.sub(r".*?Enter your question:.*?\\n+", "", response, flags=re.DOTALL)
+        clean_text = re.sub(r".*?Enter your question:.*?\n+", "", response, flags=re.DOTALL)
         clean_text = re.sub(r"The query took.*finish", "", clean_text).strip()
-        clean_text = re.sub(r"^LEANN:\\s*", "", clean_text)
+        clean_text = re.sub(r"^LEANN:\s*", "", clean_text)
         return Chat(model=model, text=clean_text.strip(), processing_time=processing_time)
 
     def _format_output(self, sections: Chat) -> str:
