@@ -4,19 +4,12 @@ from pathlib import Path
 
 from config.config import config
 from config.logger import logger
-from infrastructure.db_adapter import Status
+from core.shared.runs import RunStatus
 
 
 class LeannAdapter:
     def __init__(self):
-        self.llm_config: dict = {
-            "type": "ollama",
-            "model": config.llm_model,
-        }
-        self.embedding_config: dict = {
-            "mode": "ollama",
-            "model": config.embedding_model,
-        }
+        pass
 
     @staticmethod
     def _resolve_leann_executable() -> str:
@@ -28,12 +21,13 @@ class LeannAdapter:
             "Could not find 'leann' executable. Ensure leann[cpu] is installed in the runtime environment."
         )
 
-    def build_index(self, index_path: str, docs_path: str) -> Status:
+    @staticmethod
+    def build_index(index_path: str, docs_path: str) -> RunStatus:
         docs_dir = Path(docs_path)
         if not docs_dir.exists():
             logger.error(f"docs_path does not exist: {docs_path}")
-            return Status.ERROR
-        leann_bin = self._resolve_leann_executable()
+            return RunStatus.ERROR
+        leann_bin = LeannAdapter._resolve_leann_executable()
         command = [
             leann_bin,
             "build",
@@ -41,9 +35,9 @@ class LeannAdapter:
             "--docs",
             str(docs_dir),
             "--embedding-mode",
-            self.embedding_config["mode"],
+            "ollama",
             "--embedding-model",
-            self.embedding_config["model"],
+            config.embedding_model,
             "--backend",
             "hnsw",
             "--force",
@@ -54,7 +48,7 @@ class LeannAdapter:
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
             if process.stdout is None:
                 logger.error("leann process stdout is not available")
-                return Status.ERROR
+                return RunStatus.ERROR
             buffer = ""
             while True:
                 ch = process.stdout.read(1)
@@ -74,20 +68,21 @@ class LeannAdapter:
                 logger.info(f"index build finished successfully for workspace/index {index_path}")
             else:
                 logger.error(f"index build failed for workspace/index {index_path} with return code {rc}")
-                return Status.ERROR
+                return RunStatus.ERROR
         except Exception as e:
             logger.exception(f"failure on building LEANN index: {e}")
-            return Status.ERROR
-        return Status.COMPLETED
+            return RunStatus.ERROR
+        return RunStatus.COMPLETED
 
-    def chat(self, index_path: str, msg: str) -> str:
-        leann_bin = self._resolve_leann_executable()
+    @staticmethod
+    def chat_with_index(index_path: str, msg: str) -> str:
+        leann_bin = LeannAdapter._resolve_leann_executable()
         command = [
             leann_bin,
             "ask",
             index_path,
             "--model",
-            self.llm_config["model"],
+            config.llm_model,
             "--top-k",
             "3",
         ]

@@ -3,14 +3,12 @@ import traceback
 
 import requests
 from config.config import config
+from core.chat.application.translation_service import TranslationService
 
 
-class OllamaTranslator:
-    def __init__(self):
-        self.model = config.translator_model
-        self.url = config.ollama_url
-
-    def detect_language(self, text: str) -> str:
+class TranslationServiceImpl(TranslationService):
+    @staticmethod
+    def detect_language(text: str) -> str:
         sample_text = text[:200].strip()
         if not sample_text:
             return "English"
@@ -26,9 +24,9 @@ class OllamaTranslator:
             """
         try:
             response = requests.post(
-                f"{self.url}/api/generate",
+                f"{config.ollama_url}/api/generate",
                 json={
-                    "model": self.model,
+                    "model": config.translator_model,
                     "prompt": prompt,
                     "stream": False,
                     "options": {"temperature": 1, "num_predict": 10},
@@ -42,7 +40,8 @@ class OllamaTranslator:
             traceback.print_exc()
             return "English"
 
-    def translate(self, text: str, source_lang: str, target_lang: str) -> str:
+    @staticmethod
+    def translate(text: str, source_lang: str, target_lang: str) -> str:
         if not text.strip():
             return text
         prompt = f"""
@@ -59,9 +58,9 @@ class OllamaTranslator:
             """
         try:
             response = requests.post(
-                f"{self.url}/api/generate",
+                f"{config.ollama_url}/api/generate",
                 json={
-                    "model": self.model,
+                    "model": config.translator_model,
                     "prompt": prompt,
                     "stream": False,
                     "options": {"temperature": 1},

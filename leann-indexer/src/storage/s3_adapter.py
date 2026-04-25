@@ -8,9 +8,10 @@ from botocore.client import ClientError, Config
 from config.config import config
 from config.logger import logger
 from mypy_boto3_s3 import S3Client
+from storage.storage import Storage
 
 
-class S3Adapter:
+class S3Adapter(Storage):
     def __init__(self):
         self.client: S3Client = boto3.client(
             service_name="s3",
