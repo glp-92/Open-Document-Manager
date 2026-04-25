@@ -11,6 +11,7 @@ load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent.parent.parent / "
 class Config:
     llm_model: str
     embedding_model: str
+    translator_model: str
     db_host: str
     db_port: str
     db_usr: str
@@ -27,6 +28,7 @@ class Config:
 config = Config(
     llm_model=os.environ.get("LLM_MODEL", "qwen3.1.7-gpu"),
     embedding_model=os.environ.get("EMBEDDING_MODEL", "nomic-embed-text-cpu"),
+    translator_model=os.environ.get("TRANSLATOR_MODEL", "zongwei/gemma3-translator:1b"),
     db_host=os.environ.get("DB_HOST", "localhost"),
     db_port=os.environ.get("DB_PORT", "5432"),
     db_usr=os.environ.get("DB_USR", "testuser"),
@@ -37,5 +39,5 @@ config = Config(
     storage_usr=os.environ.get("STORAGE_USR", "testuser"),
     storage_pwd=os.environ.get("STORAGE_PWD", "testpwd"),
     storage_bucket=os.environ.get("STORAGE_BUCKET", "testbucket"),
-    ollama_url=os.environ.get("OLLAMA_URL", "testuser"),
+    ollama_url=os.environ.get("OLLAMA_URL", "http://ollama:11434/api/generate"),
 )

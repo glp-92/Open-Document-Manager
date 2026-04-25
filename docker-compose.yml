@@ -54,6 +54,7 @@ services:
       - OLLAMA_KEEP_ALIVE=1h
       - EMBEDDING_MODEL=${EMBEDDING_MODEL}
       - LLM_MODEL=${LLM_MODEL}
+      - TRANSLATOR_MODEL=${TRANSLATOR_MODEL}
     volumes:
       - ./ollama-data:/root/.ollama
       - ./ollama-server/entrypoint.sh:/entrypoint.sh

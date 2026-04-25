@@ -7,10 +7,12 @@ from events.chat import make_response_on_chat
 from events.embeddings import calculate_embeddings
 from infrastructure.db_adapter import PostgresDBAdapter
 from infrastructure.leann_adapter import LeannAdapter
+from infrastructure.ollama_translator import OllamaTranslator
 from infrastructure.s3_adapter import S3Adapter, get_storage
 
 dsn: str = f"postgresql://{config.db_usr}:{config.db_pwd}@{config.db_host}:{config.db_port}/{config.db_name}"
 leann_adapter: LeannAdapter = LeannAdapter()
+ollama_translator: OllamaTranslator = OllamaTranslator()
 s3_adapter: S3Adapter = get_storage()
 pg_adapter: PostgresDBAdapter = PostgresDBAdapter(dsn=dsn)
 
@@ -38,7 +40,10 @@ async def pg_channel_listener():
                             )
                         case "chat":
                             await make_response_on_chat(
-                                payload=payload, leann_adapter=leann_adapter, pg_adapter=pg_adapter
+                                payload=payload,
+                                leann_adapter=leann_adapter,
+                                pg_adapter=pg_adapter,
+                                ollama_translator=ollama_translator,
                             )
     except Exception as e:
         logger.error(f"worker error: {e}")
