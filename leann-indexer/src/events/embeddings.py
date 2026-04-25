@@ -1,4 +1,5 @@
 import os
+import shutil
 from typing import Literal
 
 from config.logger import logger
@@ -37,4 +38,5 @@ async def calculate_embeddings(
     status: Status = leann_adapter.build_index(index_path=workspace_id, docs_path=workspace_temp_dir)
     pg_adapter.change_run_status(run_id=embeddings_request.run_id, status=status)
     logger.info(f"finished processing embedding calc request for workspace {workspace_id} with status {status}")
+    shutil.rmtree(workspace_temp_dir, ignore_errors=True)
     return

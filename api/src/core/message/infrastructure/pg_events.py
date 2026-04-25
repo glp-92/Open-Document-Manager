@@ -1,4 +1,4 @@
-from core.message.api.dto.requests import NewMessageFromIARequest
+from core.message.api.dto.requests import NewMessageFromAIRequest
 from core.message.exceptions.workspace import MessageNotFoundError
 from core.message.infrastructure.db_model import DBMessage
 from core.message.infrastructure.repository_impl import MessageRepositoryImpl
@@ -38,8 +38,8 @@ NEW_HUMAN_CHAT_MESSAGE_TRIGGER: str = """
     WHEN (NEW.owner::text = 'HUMAN')
     EXECUTE FUNCTION notify_new_human_chat_message();
 """
-NEW_IA_CHAT_MESSAGE_FN: str = """
-    CREATE OR REPLACE FUNCTION notify_new_ia_chat_message()
+NEW_AI_CHAT_MESSAGE_FN: str = """
+    CREATE OR REPLACE FUNCTION notify_new_ai_chat_message()
     RETURNS trigger AS $$
     DECLARE v_workspace_id text;
     BEGIN
@@ -50,8 +50,8 @@ NEW_IA_CHAT_MESSAGE_FN: str = """
         IF v_workspace_id IS NULL THEN
             RETURN NEW;
         END IF;
-        IF NEW.owner::text = 'IA' THEN
-            PERFORM pg_notify('new_ia_chat_message', json_build_object(
+        IF NEW.owner::text = 'AI' THEN
+            PERFORM pg_notify('new_ai_chat_message', json_build_object(
                 'type', 'chat',
                 'content', NEW.content,
                 'owner', NEW.owner,
@@ -64,18 +64,18 @@ NEW_IA_CHAT_MESSAGE_FN: str = """
     END;
     $$ LANGUAGE plpgsql;
 """
-NEW_IA_CHAT_MESSAGE_TRIGGER: str = """
-    DROP TRIGGER IF EXISTS tr_new_ia_chat_message_trigger ON messages;
-    CREATE TRIGGER tr_new_ia_chat_message_trigger
+NEW_AI_CHAT_MESSAGE_TRIGGER: str = """
+    DROP TRIGGER IF EXISTS tr_new_ai_chat_message_trigger ON messages;
+    CREATE TRIGGER tr_new_ai_chat_message_trigger
     AFTER INSERT ON messages
     FOR EACH ROW
-    WHEN (NEW.owner::text = 'IA')
-    EXECUTE FUNCTION notify_new_ia_chat_message();
+    WHEN (NEW.owner::text = 'AI')
+    EXECUTE FUNCTION notify_new_ai_chat_message();
 """
 
 
-async def on_new_ia_chat_message_event(payload: dict, session: AsyncSession, repository: MessageRepositoryImpl) -> dict:
-    payload: NewMessageFromIARequest = NewMessageFromIARequest(**payload)
+async def on_new_ai_chat_message_event(payload: dict, session: AsyncSession, repository: MessageRepositoryImpl) -> dict:
+    payload: NewMessageFromAIRequest = NewMessageFromAIRequest(**payload)
     db_message: DBMessage = await repository.find_by_id(session=session, id=payload.message_id)
     if db_message is None:
         raise MessageNotFoundError(message_id=payload.message_id)

@@ -180,7 +180,7 @@ export function subscribeToRunEvents(
 
 // SSE server stream  for documents uploaded
 export function subscribeToDocumentEvents(
-  onMessage: (payload: DocumentEventPayload) => void, // Ahora recibe el objeto completo
+  onMessage: (payload: DocumentEventPayload) => void,
   onError?: (err: Event) => void,
 ): EventSource {
   const url = `${API_BASE}/events/documents`;
@@ -199,9 +199,9 @@ export function subscribeToDocumentEvents(
   return eventSource;
 }
 
-// SSE server stream  for IA messages
+// SSE server stream  for AI messages
 export function subscribeToMessagesEvents(
-  onMessage: (payload: MessageEventPayload) => void, // Ahora recibe el objeto completo
+  onMessage: (payload: MessageEventPayload) => void,
   onError?: (err: Event) => void,
 ): EventSource {
   const url = `${API_BASE}/events/messages`;

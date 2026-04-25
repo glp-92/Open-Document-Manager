@@ -2,10 +2,10 @@ from enum import StrEnum
 
 from core.document.infrastructure.pg_events import FINISHED_UPLOAD_DOCUMENT_FN, FINISHED_UPLOAD_DOCUMENT_TRIGGER
 from core.message.infrastructure.pg_events import (
+    NEW_AI_CHAT_MESSAGE_FN,
+    NEW_AI_CHAT_MESSAGE_TRIGGER,
     NEW_HUMAN_CHAT_MESSAGE_FN,
     NEW_HUMAN_CHAT_MESSAGE_TRIGGER,
-    NEW_IA_CHAT_MESSAGE_FN,
-    NEW_IA_CHAT_MESSAGE_TRIGGER,
 )
 from core.run.infrastructure.pg_events import (
     FINISHED_INGESTION_RUN_FN,
@@ -20,7 +20,7 @@ class Channels(StrEnum):
     FINISHED_INGESTION_RUN = "finished_ingestion_run"
     FINISHED_UPLOAD_DOCUMENT = "finished_upload_document"
     NEW_HUMAN_CHAT_MESSAGE = "new_human_chat_message"
-    NEW_IA_CHAT_MESSAGE = "new_ia_chat_message"
+    NEW_AI_CHAT_MESSAGE = "new_ai_chat_message"
 
 
 CHANNELS_REGISTRY: dict[str, tuple[str, str]] = {
@@ -28,5 +28,5 @@ CHANNELS_REGISTRY: dict[str, tuple[str, str]] = {
     Channels.FINISHED_INGESTION_RUN: (FINISHED_INGESTION_RUN_TRIGGER, FINISHED_INGESTION_RUN_FN),
     Channels.FINISHED_UPLOAD_DOCUMENT: (FINISHED_UPLOAD_DOCUMENT_TRIGGER, FINISHED_UPLOAD_DOCUMENT_FN),
     Channels.NEW_HUMAN_CHAT_MESSAGE: (NEW_HUMAN_CHAT_MESSAGE_TRIGGER, NEW_HUMAN_CHAT_MESSAGE_FN),
-    Channels.NEW_IA_CHAT_MESSAGE: (NEW_IA_CHAT_MESSAGE_TRIGGER, NEW_IA_CHAT_MESSAGE_FN),
+    Channels.NEW_AI_CHAT_MESSAGE: (NEW_AI_CHAT_MESSAGE_TRIGGER, NEW_AI_CHAT_MESSAGE_FN),
 }

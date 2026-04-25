@@ -25,7 +25,7 @@ class NewMessageRequest(BaseModel):
     content: str
 
 
-class NewMessageFromIARequest(BaseModel):
+class NewMessageFromAIRequest(BaseModel):
     message_id: UUID
     chat_id: UUID
     owner: Literal["HUMAN", "AI"] = "AI"

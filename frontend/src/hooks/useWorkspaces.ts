@@ -89,20 +89,34 @@ export function useWorkspaces() {
     const sse = subscribeToMessagesEvents(
       (payload) => {
         console.log("Message event received", payload);
-        setMessages((prev) =>
-          prev.map((msg) => {
-            if (msg.id === payload.data.id) {
-              return {
-                ...msg,
-                content: payload.data.content,
-                owner: payload.data.owner,
-                created_at: payload.data.created_at,
-                updated_at: new Date().toISOString(),
-              };
-            }
-            return msg;
-          }),
-        );
+        setMessages((prev) => {
+          const existing = prev.find((m) => m.id === payload.data.id);
+          if (existing) {
+            return prev.map((msg) =>
+              msg.id === payload.data.id
+                ? {
+                    ...msg,
+                    content: payload.data.content,
+                    owner: payload.data.owner,
+                    created_at: payload.data.created_at,
+                    updated_at: new Date().toISOString(),
+                  }
+                : msg,
+            );
+          }
+          // append new message (AI reply or new server-created message)
+          return [
+            ...prev,
+            {
+              id: payload.data.id,
+              chat_id: payload.data.chat_id,
+              owner: payload.data.owner,
+              content: payload.data.content,
+              created_at: payload.data.created_at,
+              updated_at: new Date().toISOString(),
+            },
+          ];
+        });
       },
       (err) => console.error("SSE Connection failed", err),
     );
