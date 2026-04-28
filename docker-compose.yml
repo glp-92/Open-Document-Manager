@@ -6,6 +6,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      storage:
+        condition: service_healthy
     env_file: .env
     environment:
       DB_HOST: db
@@ -22,7 +24,7 @@ services:
 
   vector-index:
     build:
-      context: ./leann-indexer
+      context: ./vector-index
     restart: on-failure
     env_file: .env
     volumes:
@@ -35,6 +37,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      storage:
+        condition: service_healthy
     deploy:
       resources:
         reservations:
@@ -42,6 +46,8 @@ services:
             - driver: nvidia
               device_ids: ["0"]
               capabilities: [gpu]
+    # volumes:
+    #   - ./indexes:/app/src/.leann/indexes
 
   ollama-server:
     image: ollama/ollama:0.21.0
