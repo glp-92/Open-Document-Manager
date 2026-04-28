@@ -4,7 +4,7 @@ from pathlib import Path
 
 from config.config import config
 from config.logger import logger
-from core.shared.runs import RunStatus
+from core.shared.schemas.runs import RunStatus
 
 
 class LeannAdapter:

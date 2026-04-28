@@ -1,6 +1,6 @@
 from typing import Literal
 
-from core.shared.runs import RunStatus
+from core.shared.schemas.runs import RunStatus
 from pydantic import BaseModel
 
 
