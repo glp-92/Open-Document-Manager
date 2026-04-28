@@ -12,6 +12,7 @@ services:
     environment:
       DB_HOST: db
       STORAGE_HOST: storage
+      STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL:-http://localhost:9000}
     ports:
       - "127.0.0.1:8080:8080"
 

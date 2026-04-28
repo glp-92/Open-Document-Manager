@@ -16,6 +16,7 @@ class Config:
     db_name: str
     storage_host: str
     storage_port: str
+    storage_public_url: str | None
     storage_usr: str
     storage_pwd: str
     storage_bucket: str
@@ -31,6 +32,7 @@ config = Config(
     db_name=os.environ.get("DB_NAME", "testdb"),
     storage_host=os.environ.get("STORAGE_HOST", "localhost"),
     storage_port=os.environ.get("STORAGE_PORT", "8883"),
+    storage_public_url=os.environ.get("STORAGE_PUBLIC_URL"),
     storage_usr=os.environ.get("STORAGE_USR", "testuser"),
     storage_pwd=os.environ.get("STORAGE_PWD", "testpwd"),
     storage_bucket=os.environ.get("STORAGE_BUCKET", "testbucket"),
