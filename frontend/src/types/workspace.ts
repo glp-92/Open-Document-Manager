@@ -36,37 +36,31 @@ export interface Document {
   updated_at: string;
 }
 
-export interface DocumentEventPayload {
-  event: string;
-  event_id: string;
-  data: {
-    id: string;
-    storage_status: "PENDING" | "READY" | "ERROR" | "DELETED";
-    workspace_id: string;
-  };
+export interface DocumentEventData {
+  id: string;
+  storage_status: "PENDING" | "READY" | "ERROR" | "DELETED";
+  workspace_id: string;
 }
 
-export interface MessageEventPayload {
-  event: string;
-  event_id: string;
-  data: {
-    id: string;
-    chat_id: string;
-    owner: "HUMAN" | "AI";
-    content: string;
-    created_at: string;
-  };
+export interface MessageEventData {
+  id: string;
+  chat_id: string;
+  owner: "HUMAN" | "AI";
+  content: string;
+  created_at: string;
 }
 
-export interface RunEventPayload {
-  event: string;
-  event_id: string;
-  data: {
-    id: string;
-    status: "PENDING" | "COMPLETED" | "ERROR" | "DELETED";
-    workspace_id: string;
-  };
+export interface RunEventData {
+  id: string;
+  status: "PENDING" | "COMPLETED" | "ERROR" | "DELETED";
+  workspace_id: string;
 }
+
+export type DocumentEventPayload = DocumentEventData | { data: DocumentEventData };
+
+export type MessageEventPayload = MessageEventData | { data: MessageEventData };
+
+export type RunEventPayload = RunEventData | { data: RunEventData };
 
 export interface Run {
   id: string;

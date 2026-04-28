@@ -12,6 +12,18 @@ import {
   subscribeToRunEvents,
 } from "@/api/endpoints";
 
+function getSseData<T>(payload: T | { data: T }): T {
+  if (
+    typeof payload === "object" &&
+    payload !== null &&
+    "data" in payload &&
+    (payload as { data?: T }).data !== undefined
+  ) {
+    return (payload as { data: T }).data;
+  }
+  return payload as T;
+}
+
 export function useWorkspaces() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [chats, setChats] = useState<Chat[]>([]);
@@ -44,15 +56,16 @@ export function useWorkspaces() {
   useEffect(() => {
     const sse = subscribeToRunEvents(
       (payload) => {
-        console.log("Run event received", payload);
+        const data = getSseData(payload);
+        console.log("Run event received", data);
         setRunStatus((prev) => ({
           ...prev,
-          [payload.data.workspace_id]: payload.data.status,
+          [data.workspace_id]: data.status,
         }));
-        if (payload.data.status !== "PENDING") {
+        if (data.status !== "PENDING") {
           setRunRequestInFlight((prev) => ({
             ...prev,
-            [payload.data.workspace_id]: false,
+            [data.workspace_id]: false,
           }));
         }
       },
@@ -65,13 +78,14 @@ export function useWorkspaces() {
   useEffect(() => {
     const sse = subscribeToDocumentEvents(
       (payload) => {
-        console.log("Document event received", payload);
+        const data = getSseData(payload);
+        console.log("Document event received", data);
         setDocuments((prev) =>
           prev.map((doc) => {
-            if (doc.id === payload.data.id) {
+            if (doc.id === data.id) {
               return {
                 ...doc,
-                storage_status: payload.data.storage_status,
+                storage_status: data.storage_status,
                 updated_at: new Date().toISOString(),
               };
             }
@@ -88,17 +102,18 @@ export function useWorkspaces() {
   useEffect(() => {
     const sse = subscribeToMessagesEvents(
       (payload) => {
-        console.log("Message event received", payload);
+        const data = getSseData(payload);
+        console.log("Message event received", data);
         setMessages((prev) => {
-          const existing = prev.find((m) => m.id === payload.data.id);
+          const existing = prev.find((m) => m.id === data.id);
           if (existing) {
             return prev.map((msg) =>
-              msg.id === payload.data.id
+              msg.id === data.id
                 ? {
                     ...msg,
-                    content: payload.data.content,
-                    owner: payload.data.owner,
-                    created_at: payload.data.created_at,
+                    content: data.content,
+                    owner: data.owner,
+                    created_at: data.created_at,
                     updated_at: new Date().toISOString(),
                   }
                 : msg,
@@ -108,11 +123,11 @@ export function useWorkspaces() {
           return [
             ...prev,
             {
-              id: payload.data.id,
-              chat_id: payload.data.chat_id,
-              owner: payload.data.owner,
-              content: payload.data.content,
-              created_at: payload.data.created_at,
+              id: data.id,
+              chat_id: data.chat_id,
+              owner: data.owner,
+              content: data.content,
+              created_at: data.created_at,
               updated_at: new Date().toISOString(),
             },
           ];
@@ -199,23 +214,20 @@ export function useWorkspaces() {
     }
   }, []);
 
-  const deleteWorkspace = useCallback(
-    async (id: string) => {
-      try {
-        await api.deleteWorkspace(id);
-        setWorkspaces((prev) => {
-          const remaining = prev.filter((w) => w.id !== id);
-          setActiveWorkspaceId((current) =>
-            current === id ? (remaining[0]?.id ?? null) : current,
-          );
-          return remaining;
-        });
-      } catch (e) {
-        console.error(e);
-      }
-    },
-    [],
-  );
+  const deleteWorkspace = useCallback(async (id: string) => {
+    try {
+      await api.deleteWorkspace(id);
+      setWorkspaces((prev) => {
+        const remaining = prev.filter((w) => w.id !== id);
+        setActiveWorkspaceId((current) =>
+          current === id ? (remaining[0]?.id ?? null) : current,
+        );
+        return remaining;
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
 
   const deleteDocument = useCallback(async (docId: string) => {
     try {
@@ -359,11 +371,14 @@ export function useWorkspaces() {
       try {
         const res = await api.createDocument(activeWorkspaceId, file.name);
         // Upload to presigned URL
-        await fetch(res.presigned_url, {
+        const uploadResponse = await fetch(res.presigned_url, {
           method: "PUT",
           body: file,
           headers: { "Content-Type": file.type || "application/octet-stream" },
         });
+        if (!uploadResponse.ok) {
+          throw new Error(`Document upload failed: ${uploadResponse.status}`);
+        }
         // Refetch documents for the chat
         const docs = await api.getDocuments({
           workspace_id: activeWorkspaceId,
