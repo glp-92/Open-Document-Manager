@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   Workspace,
   Chat,
@@ -38,6 +38,7 @@ export function useWorkspaces() {
     null,
   );
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
+  const skipNextMessagesFetchForChatId = useRef<string | null>(null);
 
   // Fetch workspaces on mount
   useEffect(() => {
@@ -168,6 +169,10 @@ export function useWorkspaces() {
       setMessages([]);
       return;
     }
+    if (skipNextMessagesFetchForChatId.current === activeChatId) {
+      skipNextMessagesFetchForChatId.current = null;
+      return;
+    }
     api
       .getMessages({ chat_id: activeChatId })
       .then((res) => setMessages(res?.messages ?? []))
@@ -281,6 +286,7 @@ export function useWorkspaces() {
           );
           setChats((prev) => [...prev, newChat]);
           chatId = newChat.id;
+          skipNextMessagesFetchForChatId.current = chatId;
           setActiveChatId(chatId);
         } catch (e) {
           console.error(e);

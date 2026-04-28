@@ -276,20 +276,6 @@ function WorkspaceItem({
             </div>
           </>
         )}
-        <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-          {docs.length > 0 && (
-            <span className="flex items-center gap-0.5">
-              <FileText className="w-3 h-3" />
-              {docs.length}
-            </span>
-          )}
-          {chats.length > 0 && (
-            <span className="flex items-center gap-0.5">
-              <MessageSquare className="w-3 h-3" />
-              {chats.length}
-            </span>
-          )}
-        </div>
       </button>
 
       <AnimatePresence initial={false}>
