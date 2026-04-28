@@ -137,9 +137,11 @@ function Sidebar(
             onSelect={() => ws.selectWorkspace(w.id)}
             onWorkspaceRename={ws.editWorkspace}
             onWorkspaceRenameFinished={() => ws.setEditingWorkspaceId(null)}
+            onDeleteWorkspace={ws.deleteWorkspace}
             onSelectChat={ws.onSelectChat}
             onCreateChat={ws.onCreateChat}
             onDeleteChat={ws.deleteChat}
+            onDeleteDocument={ws.deleteDocument}
             onUpload={ws.uploadDocument}
             onComputeEmbeddings={() => ws.computeEmbeddings(w.id)}
           />
@@ -163,6 +165,8 @@ function WorkspaceItem({
   onSelectChat,
   onCreateChat,
   onDeleteChat,
+  onDeleteDocument,
+  onDeleteWorkspace,
   onUpload,
   onComputeEmbeddings,
   onWorkspaceRename,
@@ -179,6 +183,8 @@ function WorkspaceItem({
   onSelectChat: (id: string) => void;
   onCreateChat: () => void;
   onDeleteChat: (chat_id: string) => void;
+  onDeleteDocument: (doc_id: string) => void;
+  onDeleteWorkspace: (id: string) => void;
   onUpload: (file: File) => void;
   onComputeEmbeddings: () => void;
   onWorkspaceRename: (id: string, name: string) => void;
@@ -257,6 +263,17 @@ function WorkspaceItem({
             >
               <Pencil className="w-3 h-3" />
             </div>
+            {/* Delete Workspace */}
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                if (confirm("¿Borrar este workspace y todo su contenido?"))
+                  onDeleteWorkspace(workspace.id);
+              }}
+              className="p-1 opacity-0 group-hover:opacity-100 max-md:opacity-100 hover:bg-destructive/20 hover:text-destructive rounded transition-all text-muted-foreground"
+            >
+              <Trash2 className="w-3 h-3" />
+            </div>
           </>
         )}
         <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
@@ -305,6 +322,7 @@ function WorkspaceItem({
                     <DocsSection
                       docs={docs}
                       onUpload={onUpload}
+                      onDeleteDocument={onDeleteDocument}
                       embeddingStatus={embeddingStatus}
                       isEmbeddingActionRunning={isEmbeddingActionRunning}
                       onComputeEmbeddings={onComputeEmbeddings}
@@ -414,12 +432,14 @@ function SectionBtn({
 function DocsSection({
   docs,
   onUpload,
+  onDeleteDocument,
   embeddingStatus,
   isEmbeddingActionRunning,
   onComputeEmbeddings,
 }: {
   docs: DocType[];
   onUpload: (file: File) => void;
+  onDeleteDocument: (doc_id: string) => void;
   embeddingStatus: null | "PENDING" | "COMPLETED" | "ERROR" | "DELETED";
   isEmbeddingActionRunning: boolean;
   onComputeEmbeddings: () => void;
@@ -450,7 +470,7 @@ function DocsSection({
           <div
             key={d.id}
             className={`
-        flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-all
+        group flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-all
         ${
           isReady
             ? "hover:bg-secondary/50 text-foreground"
@@ -468,6 +488,18 @@ function DocsSection({
               <span className="text-[10px] animate-pulse text-muted-foreground">
                 {d.storage_status}...
               </span>
+            )}
+            {isReady && (
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (confirm(`¿Borrar "${d.filename}"?`))
+                    onDeleteDocument(d.id);
+                }}
+                className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 p-1 hover:bg-destructive/20 hover:text-destructive rounded transition-all text-muted-foreground cursor-pointer"
+              >
+                <Trash2 className="w-3 h-3" />
+              </div>
             )}
           </div>
         );

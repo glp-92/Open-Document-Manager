@@ -199,6 +199,33 @@ export function useWorkspaces() {
     }
   }, []);
 
+  const deleteWorkspace = useCallback(
+    async (id: string) => {
+      try {
+        await api.deleteWorkspace(id);
+        setWorkspaces((prev) => {
+          const remaining = prev.filter((w) => w.id !== id);
+          setActiveWorkspaceId((current) =>
+            current === id ? (remaining[0]?.id ?? null) : current,
+          );
+          return remaining;
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    [],
+  );
+
+  const deleteDocument = useCallback(async (docId: string) => {
+    try {
+      await api.deleteDocument(docId);
+      setDocuments((prev) => prev.filter((d) => d.id !== docId));
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
   const createChat = useCallback(
     async (name?: string) => {
       if (!activeWorkspaceId) return;
@@ -364,8 +391,10 @@ export function useWorkspaces() {
     selectChat,
     createWorkspace,
     editWorkspace,
+    deleteWorkspace,
     createChat,
     deleteChat,
+    deleteDocument,
     sendMessage,
     uploadDocument,
     computeEmbeddings,
