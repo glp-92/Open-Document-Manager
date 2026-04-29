@@ -80,7 +80,7 @@ class DocumentService:
         return
 
     async def _filter_folder_creation_events(self, request: DocumentStorageWebhookRequest) -> bool:
-        if request.message.new_entry.is_directory:
+        if request.message.new_entry and request.message.new_entry.is_directory:
             logger.info("received webhook for a directory creation event, ignoring.")
             return True
         return False
@@ -99,7 +99,13 @@ class DocumentService:
                 )
             case "delete":
                 logger.info("delete event received from storage")
-                await self.delete_document_by_id(session=session, document_id=document_id)
+                try:
+                    await self.delete_document_by_id(session=session, document_id=document_id)
+                except DocumentNotFoundError:
+                    logger.info(
+                        "delete webhook ignored for already deleted document id=%s",
+                        document_id,
+                    )
             case "rename":
                 logger.info("rename event received from storage")
                 await self._on_rename(
@@ -109,8 +115,14 @@ class DocumentService:
                 pass
         return DocumentStorageWebhookResponse(status="ok")
 
-    async def delete_document_by_id(self, session: AsyncSession, document_id: UUID):
-        deleted_id: UUID | None = await self.document_repository_impl.delete_by_id(session=session, id=document_id)
-        if deleted_id is None:
+    async def delete_document_by_id(
+        self,
+        session: AsyncSession,
+        document_id: UUID,
+        storage_adapter: S3Adapter | None = None,
+    ) -> None:
+        document_url: str | None = await self.document_repository_impl.delete_by_id(session=session, id=document_id)
+        if document_url is None:
             raise DocumentNotFoundError(document_id=document_id)
-        return
+        if storage_adapter is not None:
+            await storage_adapter.delete_file(bucket=config.storage_bucket, filename=document_url)

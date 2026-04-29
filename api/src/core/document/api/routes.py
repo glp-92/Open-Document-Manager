@@ -66,9 +66,15 @@ class DocumentRouter:
                 raise HTTPException(status_code=400, detail="bad request")
 
         @self.router.delete("/{document_id}", status_code=204)
-        async def delete_document(document_id: UUID, sql_session: AsyncSession = Depends(get_db)):
+        async def delete_document(
+            document_id: UUID, sql_session: AsyncSession = Depends(get_db), s3_adapter: S3Adapter = Depends(get_storage)
+        ):
             try:
-                return await self.document_service.delete_document_by_id(session=sql_session, document_id=document_id)
+                return await self.document_service.delete_document_by_id(
+                    session=sql_session,
+                    storage_adapter=s3_adapter,
+                    document_id=document_id,
+                )
             except DocumentNotFoundError:
                 raise HTTPException(status_code=404, detail="not found")
             except (ValidationError, Exception):

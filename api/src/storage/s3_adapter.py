@@ -1,6 +1,7 @@
 import asyncio
 import os
 from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 from uuid import UUID
 
 import boto3
@@ -12,35 +13,38 @@ from mypy_boto3_s3 import S3Client
 
 class S3Adapter:
     def __init__(self):
-        internal_endpoint_url = f"http://{config.storage_host}:{config.storage_port}"
-        public_endpoint_url = self._normalize_endpoint_url(
+        s3_internal_endpoint_url = f"http://{config.storage_host}:{config.storage_port}"
+        s3_public_endpoint_url = self._normalize_endpoint_url(
             config.storage_public_url,
-            fallback=internal_endpoint_url,
+            fallback=s3_internal_endpoint_url,
         )
+        self.s3_client: S3Client = self._build_client(s3_internal_endpoint_url)
+        self.presign_client: S3Client = (
+            self.s3_client
+            if s3_public_endpoint_url == s3_internal_endpoint_url
+            else self._build_client(s3_public_endpoint_url)
+        )
+        logger.info(
+            "S3 adapter initialized (internal=%s, public=%s, shared_client=%s)",
+            s3_internal_endpoint_url,
+            s3_public_endpoint_url,
+            self.presign_client is self.s3_client,
+        )
+        try:
+            self.s3_client.create_bucket(Bucket=config.storage_bucket)
+        except self.s3_client.exceptions.BucketAlreadyExists:
+            logger.info(f"bucket {config.storage_bucket} already exists")
+        self._executor = ThreadPoolExecutor(max_workers=10)
 
-        self.client: S3Client = boto3.client(
+    @staticmethod
+    def _build_client(endpoint_url: str) -> S3Client:
+        return boto3.client(
             service_name="s3",
             aws_access_key_id=config.storage_usr,
             aws_secret_access_key=config.storage_pwd,
-            endpoint_url=internal_endpoint_url,
+            endpoint_url=endpoint_url,
             config=Config(signature_version="s3v4"),
         )
-        self.presign_client: S3Client = (
-            self.client
-            if public_endpoint_url == internal_endpoint_url
-            else boto3.client(
-                service_name="s3",
-                aws_access_key_id=config.storage_usr,
-                aws_secret_access_key=config.storage_pwd,
-                endpoint_url=public_endpoint_url,
-                config=Config(signature_version="s3v4"),
-            )
-        )
-        try:
-            self.client.create_bucket(Bucket=config.storage_bucket)
-        except self.client.exceptions.BucketAlreadyExists:
-            logger.info(f"bucket {config.storage_bucket} already exists")
-        self._executor = ThreadPoolExecutor(max_workers=10)
 
     @staticmethod
     def _normalize_endpoint_url(endpoint: str | None, fallback: str) -> str:
@@ -62,9 +66,16 @@ class S3Adapter:
             logger.error(f"presigned url retrieve error: {e}")
             raise
 
+    def _normalize_key(self, filename: str, bucket: str) -> str:
+        prefix = f"/buckets/{bucket}/"
+        if filename.startswith(prefix):
+            return filename[len(prefix) :]
+        return filename.lstrip("/")
+
     async def delete_file(self, bucket: str, filename: str):
+        key = self._normalize_key(filename, bucket)
         loop = asyncio.get_running_loop()
-        await loop.run_in_executor(self._executor, self.client.delete_object, bucket, filename)
+        await loop.run_in_executor(self._executor, partial(self.s3_client.delete_object, Bucket=bucket, Key=key))
 
 
 _storage_adapter = S3Adapter()

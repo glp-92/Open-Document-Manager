@@ -11,6 +11,7 @@ import {
 } from "@/types/workspace";
 
 import { AnimatePresence, motion } from "framer-motion";
+import Markdown from "react-markdown";
 import {
   Plus,
   FolderOpen,
@@ -684,76 +685,52 @@ function Bubble({ message }: { message: Message }) {
 }
 
 function MdContent({ content }: { content: string }) {
-  const lines = content.split("\n");
-  const els: React.ReactNode[] = [];
-  let tableRows: string[][] = [];
-
-  const flushTable = () => {
-    if (!tableRows.length) return;
-    els.push(
-      <div key={`t${els.length}`} className="my-3 overflow-x-auto">
-        <table className="w-full text-xs border-collapse">
-          <thead>
-            <tr>
-              {tableRows[0].map((c, i) => (
-                <th
-                  key={i}
-                  className="text-left px-3 py-1.5 border-b border-border font-medium text-muted-foreground"
-                >
-                  {c.trim()}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {tableRows.slice(2).map((r, ri) => (
-              <tr key={ri}>
-                {r.map((c, ci) => (
-                  <td
-                    key={ci}
-                    className="px-3 py-1.5 border-b border-border/50"
-                  >
-                    {c.trim()}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>,
-    );
-    tableRows = [];
-  };
-
-  let inTable = false;
-  lines.forEach((line, i) => {
-    if (line.startsWith("|")) {
-      inTable = true;
-      tableRows.push(line.split("|").filter(Boolean));
-      return;
-    }
-    if (inTable) {
-      flushTable();
-      inTable = false;
-    }
-    if (!line.trim()) {
-      els.push(<div key={i} className="h-2" />);
-      return;
-    }
-    els.push(
-      <p
-        key={i}
-        dangerouslySetInnerHTML={{
-          __html: line
-            .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-            .replace(
-              /`(.*?)`/g,
-              '<code class="px-1 py-0.5 rounded bg-border/60 text-xs font-mono">$1</code>',
-            ),
-        }}
-      />,
-    );
-  });
-  if (inTable) flushTable();
-  return <>{els}</>;
+  return (
+    <Markdown
+      components={{
+        p: ({ children }) => <p className="mb-2">{children}</p>,
+        strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+        em: ({ children }) => <em className="italic">{children}</em>,
+        code: ({ children }) => (
+          <code className="px-1.5 py-0.5 rounded bg-border/60 text-xs font-mono">
+            {children}
+          </code>
+        ),
+        pre: ({ children }) => (
+          <pre className="bg-border/30 rounded p-3 overflow-x-auto my-2 text-xs">
+            {children}
+          </pre>
+        ),
+        h1: ({ children }) => <h1 className="text-lg font-bold mb-2 mt-3">{children}</h1>,
+        h2: ({ children }) => <h2 className="text-base font-bold mb-2 mt-2">{children}</h2>,
+        h3: ({ children }) => <h3 className="text-sm font-bold mb-1.5 mt-1.5">{children}</h3>,
+        ul: ({ children }) => <ul className="list-disc list-inside space-y-1 mb-2 ml-2">{children}</ul>,
+        ol: ({ children }) => <ol className="list-decimal list-inside space-y-1 mb-2 ml-2">{children}</ol>,
+        li: ({ children }) => <li className="text-sm">{children}</li>,
+        blockquote: ({ children }) => (
+          <blockquote className="border-l-4 border-border pl-3 italic text-muted-foreground mb-2">
+            {children}
+          </blockquote>
+        ),
+        table: ({ children }) => (
+          <div className="overflow-x-auto my-2">
+            <table className="w-full text-xs border-collapse">{children}</table>
+          </div>
+        ),
+        thead: ({ children }) => <thead>{children}</thead>,
+        tbody: ({ children }) => <tbody>{children}</tbody>,
+        tr: ({ children }) => <tr>{children}</tr>,
+        th: ({ children }) => (
+          <th className="text-left px-3 py-1.5 border-b border-border font-medium text-muted-foreground">
+            {children}
+          </th>
+        ),
+        td: ({ children }) => (
+          <td className="px-3 py-1.5 border-b border-border/50">{children}</td>
+        ),
+      }}
+    >
+      {content}
+    </Markdown>
+  );
 }

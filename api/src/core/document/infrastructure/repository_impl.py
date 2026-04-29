@@ -63,7 +63,7 @@ class DocumentRepositoryImpl(DocumentRepository):
         return db_document
 
     @staticmethod
-    async def delete_by_id(session: AsyncSession, id: UUID) -> UUID | None:
-        stmt = delete(DBDocument).where(DBDocument.id == id).returning(DBDocument.id)
+    async def delete_by_id(session: AsyncSession, id: UUID) -> str | None:
+        stmt = delete(DBDocument).where(DBDocument.id == id).returning(DBDocument.url)
         result: Result = await session.execute(stmt)
         return result.scalar_one_or_none()

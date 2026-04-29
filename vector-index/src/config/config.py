@@ -39,5 +39,5 @@ config = Config(
     storage_usr=os.environ.get("STORAGE_USR", "testuser"),
     storage_pwd=os.environ.get("STORAGE_PWD", "testpwd"),
     storage_bucket=os.environ.get("STORAGE_BUCKET", "testbucket"),
-    ollama_url=os.environ.get("OLLAMA_URL", "http://ollama:11434/api/generate"),
+    ollama_url=os.environ.get("OLLAMA_URL", "http://ollama:11434"),
 )
