@@ -80,6 +80,7 @@ export default function Index() {
           onSend={ws.sendMessage}
           title={ws.activeChat?.name ?? ws.activeWorkspace?.name ?? "DocAssist"}
           hasDocuments={ws.workspaceDocs.length > 0}
+          hasWorkspace={Boolean(ws.activeWorkspaceId)}
           isMobile={isMobile}
           onOpenSidebar={() => setSidebarOpen(true)}
         />
@@ -552,6 +553,7 @@ function ChatArea({
   onSend,
   title,
   hasDocuments,
+  hasWorkspace,
   isMobile,
   onOpenSidebar,
 }: {
@@ -559,6 +561,7 @@ function ChatArea({
   onSend: (c: string) => void;
   title: string;
   hasDocuments: boolean;
+  hasWorkspace: boolean;
   isMobile?: boolean;
   onOpenSidebar?: () => void;
 }) {
@@ -650,12 +653,17 @@ function ChatArea({
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask something about your documents…"
-              className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none py-1.5"
+              disabled={!hasWorkspace}
+              placeholder={
+                hasWorkspace
+                  ? "Ask something about your documents…"
+                  : "Create or select a workspace first"
+              }
+              className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none py-1.5 disabled:opacity-50"
             />
             <button
               type="submit"
-              disabled={!input.trim()}
+              disabled={!input.trim() || !hasWorkspace}
               className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-accent-foreground disabled:opacity-30 transition-opacity hover:opacity-90"
             >
               <Send className="w-4 h-4" />

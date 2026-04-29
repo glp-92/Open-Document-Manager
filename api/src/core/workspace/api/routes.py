@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, Query
 from fastapi.exceptions import HTTPException
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
+from storage.s3_adapter import S3Adapter, get_storage
 
 
 class WorkspaceRouter:
@@ -60,10 +61,16 @@ class WorkspaceRouter:
                 raise HTTPException(status_code=400, detail="bad request")
 
         @self.router.delete("/{workspace_id}", status_code=204)
-        async def delete_workspace(workspace_id: UUID, sql_session: AsyncSession = Depends(get_db)):
+        async def delete_workspace(
+            workspace_id: UUID,
+            sql_session: AsyncSession = Depends(get_db),
+            s3_adapter: S3Adapter = Depends(get_storage),
+        ):
             try:
                 return await self.workspace_service.delete_workspace_by_id(
-                    session=sql_session, workspace_id=workspace_id
+                    session=sql_session,
+                    workspace_id=workspace_id,
+                    storage_adapter=s3_adapter,
                 )
             except WorkspaceNotFoundError:
                 raise HTTPException(status_code=404, detail="not found")

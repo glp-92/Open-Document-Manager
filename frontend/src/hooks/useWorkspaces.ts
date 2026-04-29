@@ -144,6 +144,8 @@ export function useWorkspaces() {
     if (!activeWorkspaceId) {
       setChats([]);
       setDocuments([]);
+      setActiveChatId(null);
+      setMessages([]);
       return;
     }
     api
@@ -275,10 +277,16 @@ export function useWorkspaces() {
 
   const sendMessage = useCallback(
     async (content: string) => {
+      // Require workspace to send messages
+      if (!activeWorkspaceId) {
+        console.warn("Cannot send message: no workspace selected");
+        return;
+      }
+
       let chatId = activeChatId;
 
       // Auto-create chat if none active
-      if (!chatId && activeWorkspaceId) {
+      if (!chatId) {
         try {
           const newChat = await api.createChat(
             activeWorkspaceId,

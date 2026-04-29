@@ -63,6 +63,12 @@ class DocumentRepositoryImpl(DocumentRepository):
         return db_document
 
     @staticmethod
+    async def find_urls_by_workspace_id(session: AsyncSession, workspace_id: UUID) -> list[str]:
+        stmt = select(DBDocument.url).where(DBDocument.workspace_id == workspace_id, DBDocument.url.is_not(None))
+        result: Result = await session.execute(stmt)
+        return list(result.scalars().all())
+
+    @staticmethod
     async def delete_by_id(session: AsyncSession, id: UUID) -> str | None:
         stmt = delete(DBDocument).where(DBDocument.id == id).returning(DBDocument.url)
         result: Result = await session.execute(stmt)

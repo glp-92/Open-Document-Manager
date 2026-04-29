@@ -34,7 +34,10 @@ class Core:
         self.run_repository_impl = RunRepositoryImpl
 
     def _set_services(self):
-        self.workspace_service = WorkspaceService(workspace_repository_impl=self.workspace_repository_impl)
+        self.workspace_service = WorkspaceService(
+            workspace_repository_impl=self.workspace_repository_impl,
+            document_repository_impl=self.document_repository_impl,
+        )
         self.document_service = DocumentService(document_repository_impl=self.document_repository_impl)
         self.chat_service = ChatService(chat_repository_impl=self.chat_repository_impl)
         self.message_service = MessageService(message_repository_impl=self.message_repository_impl)
